@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <!--Title Block-->
+    <title>{% block title %}YEAAAAH{% endblock %}</title>
+
+    <!--Fonts-->
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Crete+Round' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+    <!--Skeleton-->
+    <link rel="stylesheet" href="/static/third-party/skeleton.css">
+
+    <!--Style-->
+    <link rel="stylesheet" href="/static/style.css">
+
+    <!--jQuery-->
+    <script type="text/javascript" src="https://code.jquery.com/jquery.js"></script>
+
+    <!--Javascript-->
+    {% block javascript %}SCRIPTS HERE{% endblock %}
+
+</head>
+
+<body>
+    <div class="container">
+        <!--Site Header and Navbar-->
+
+
+        <!--Body-->
+        {% block content %}
+            THINGS!
+        {% endblock %}
+
+        <!--Site Footer-->
+
+    </div>
+
+</body>
+</html>

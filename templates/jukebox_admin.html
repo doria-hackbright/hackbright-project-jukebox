@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Office Jukebox{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript" src="/static/javascript/search.js"></script>
+    <script type="text/javascript" src="/static/javascript/admin_only.js"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+    <h1>Welcome to your jukebox!</h1>
+    <br>
+    </div><!--row-->
+    <div class="row">
+        <div class ="five columns offset-by-one">
+            <h5>Music Player</h5>
+            <button><i class="fa fa-play"></i> Play</button>
+            <button><i class="fa fa-pause"></i> Pause</button>
+            <button><i class="fa fa-forward"></i> Skip</button>
+        </div>
+        <div class ="four columns offset-by-one">
+            <span>Include your friends!</span>
+            <textarea rows="2" cols="40" readonly="true" id="public-url">
+            </textarea>
+        </div>
+    </div> <!--row-->
+    <div class="row">
+        <br>
+        <br>
+        <div class ="five columns offset-by-one">
+            <div id="search-toggle" class="search">
+                <h5>&#10753; Click here to add a new song!</h5>
+            </div>
+            <div id="search-form" style="display:none;" class="search">
+                <form>
+                    <label>
+                        I want to listen to:
+                        <input type="text" name="search-term">
+                    </label>
+                    <input type="submit" value="Search!">
+                </form>
+                <div id="search-results"><!--Search results populated here--></div>
+            </div>
+        </div>
+        <div class ="four columns offset-by-one">
+            <button>Party's over, end jukebox :(</button>
+        </div>
+    </div><!--row-->
+    <div class="row">
+        <br>
+        <br>
+        <div class ="ten columns offset-by-one">
+            <h5>Playlist</h5>
+            <table class="u-full-width">
+              <thead>
+                <tr>
+                  <th>Song Name</th>
+                  <th>Artist</th>
+                  <th>Album</th>
+                  <th>Votes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!--Jinja For Loop-->
+                <tr>
+                  <td>{{ title }}</td>
+                  <td>{{ artist }}</td>
+                  <td>{{ album }}</td>
+                  <td>{{ votes }}</td>
+                </tr>
+              </tbody>
+            </table>
+        </div>
+    </div> <!--row-->
+
+{% endblock %}
+

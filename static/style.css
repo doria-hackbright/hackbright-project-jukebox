@@ -1,0 +1,18 @@
+body {
+    font-family: 'Source Sans Pro', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Crete Round', serif;
+}
+
+.search {
+    border-radius:4px;
+    padding:0.5em;
+    border: 1px solid #33C3F0;
+}
+
+#search-toggle {
+    color:#FFF;
+    background-color:#33C3F0;
+}

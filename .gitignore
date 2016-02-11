@@ -1,0 +1,7 @@
+venv/
+tmp/
+tickets/
+.DS_Store
+*.pyc
+secrets.sh
+spotify_appkey.key

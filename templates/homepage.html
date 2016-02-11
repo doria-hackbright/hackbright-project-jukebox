@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Office Jukebox{% endblock %}
+
+{% block javascript %}
+{% endblock %}
+
+{% block content %}
+    <div class="row" style="text-align:center;">
+        <div class ="eight columns offset-by-two">
+            <h1>Welcome to Office Jukebox!</h1>
+            <i class="fa fa-volume-up" style="font-size:5em;"></i>
+            <h5>To get started with a new jukebox, click the button below!</h5>
+        </div>
+    </div> <!--row-->
+
+    <div class="row" style="text-align:center;">
+        <div class="four columns offset-by-four">
+            <form action="/jukebox" method="post">
+            <input class="button-primary" type="submit" value="Make me a jukebox">
+            </form>
+        </div>
+    </div> <!--row-->
+
+{% endblock %}
