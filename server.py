@@ -97,7 +97,11 @@ def jukebox_public(jukebox_id):
 def jukebox_private(jukebox_id):
     """Renders the admin view for a jukebox."""
 
-    return render_template('jukebox_admin.html')
+    public_url = "localhost:5000/jukebox/" + jukebox_id
+    url = "/jukebox/" + jukebox_id + "/delete"
+    return render_template('jukebox_admin.html',
+                           public_url=public_url,
+                           url=url)
 
 
 @app.route("/guest", methods=['POST'])

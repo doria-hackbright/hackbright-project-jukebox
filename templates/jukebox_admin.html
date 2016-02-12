@@ -4,7 +4,6 @@
 
 {% block javascript %}
     <script type="text/javascript" src="/static/javascript/search.js"></script>
-    <script type="text/javascript" src="/static/javascript/admin_only.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -21,8 +20,7 @@
         </div>
         <div class ="four columns offset-by-one">
             <span>Include your friends!</span>
-            <textarea rows="2" cols="40" readonly="true" id="public-url">
-            </textarea>
+            <textarea rows="2" cols="40" readonly="true" id="public-url">{{ public_url }}</textarea>
         </div>
     </div> <!--row-->
     <div class="row">
@@ -44,7 +42,7 @@
             </div>
         </div>
         <div class ="four columns offset-by-one">
-            <form action="" method="post" id="delete-jukebox">
+            <form action={{ url }} method="post" id="delete-jukebox">
                 <input type="submit" value="Party's over, delete this jukebox :(" id="delete-submit">
             </form>
         </div>
