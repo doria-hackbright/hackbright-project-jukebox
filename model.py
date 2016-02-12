@@ -38,7 +38,7 @@ class JukeboxAdmin(db.Model):
         return new_admin
 
 
-class PlaylistGuest(db.Model):
+class JukeboxGuest(db.Model):
     """Users with guest access to a given jukebox.
 
     They recieved a unique public URL to the jukebox from the admin user.
@@ -80,7 +80,7 @@ class Jukebox(db.Model):
                              onupdate=db.func.now())
 
     admin = db.relationship('JukeboxAdmin', backref='jukebox')
-    guests = db.relationship('PlaylistGuest', backref='jukebox')
+    guests = db.relationship('JukeboxGuest', backref='jukebox')
     songs = db.relationship('Song',
                             secondary='song_user_relations',
                             backref='jukeboxes')

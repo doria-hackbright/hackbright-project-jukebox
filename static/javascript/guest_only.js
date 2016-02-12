@@ -1,9 +1,8 @@
-// On Load
-
 $(function() {
 
+    //On load, a post request is sent to create a new user
     $.post('/guest', {'jukebox_id': window.location.href.slice(-36)}, function() {
-        alert("I made a new user!");
+        console.log("I made a new user!");
     });
 
 });

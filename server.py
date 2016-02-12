@@ -2,6 +2,8 @@
 
 # Standard Python Libraries
 from datetime import datetime
+import os
+import threading
 
 # Flask
 from flask import Flask, render_template, redirect, request, flash, session, url_for
@@ -24,6 +26,42 @@ app = Flask(__name__)
 ### (2) Supporting functions
 
 
+def connection_state_listener(session):
+    """A function that sets the logged in thread event to true.
+
+    The thread signals the event and other threads wait for it."""
+
+    if session.connection.state is spotify.ConnectionState.LOGGED_IN:
+        logged_in_event.set()
+
+        print "I'M LOGGED IN."
+
+
+def spotify_login(session):
+    """Logs into Spotify to access the features."""
+
+    # Set up an event for "logged_in" and a listener for the connection state
+    logged_in_event = threading.Event()
+
+    # Start the Pyspotify event loop
+    loop = spotify.EventLoop(session)
+    loop.start()
+
+    # Register event listener
+    session.on(spotify.SessionEvent.CONNECTION_STATE_UPDATED,
+               connection_state_listener)
+
+    # Login using environment variables
+    session.login(os.environ['SPOTIFY_UN'], os.environ['SPOTIFY_PW'])
+
+    # Blocks the thread until the event becomes True, which will be triggered
+    # by function connection_state_listener (success handler), attached to the
+    # session event listener
+    logged_in_event.wait()
+
+    return True
+
+
 ################################################################################
 ### (3) App routes
 
@@ -35,7 +73,7 @@ def homepage():
 
 
 @app.route("/jukebox", methods=['POST'])
-def jukebox_admin():
+def new_jukebox():
     """Renders the full jukebox in admin view."""
 
     new_jukebox = Jukebox.create()
@@ -68,13 +106,32 @@ def new_guest():
 
     jukebox_id = request.form.get('jukebox_id')
     print jukebox_id
-    new_user = PlaylistGuest.create(jukebox_id)
+    new_user = JukeboxGuest.create(jukebox_id)
     print new_user
+    print new_user.guest_id
     session['user_id'] = new_user.guest_id
+    print session['user_id']
 
     print "YAY, NEW GUEST!"
 
-    return 200
+    return redirect(url_for('jukebox_public', jukebox_id=jukebox_id))
+
+
+@app.route("/song", methods=['POST'])
+def new_song():
+    """Adds a new song to database."""
+
+    # First I need to make a call to Spotify
+
+
+@app.route("/jukebox/<jukebox_id>/delete", methods=['POST'])
+def delete_jukebox(jukebox_id):
+    """Deletes a jukebox and all of its admin, guests, votes, and songs."""
+
+    # Find all the guests, admins, votes, and songs associated with the jukebox
+    
+
+    return "Hello", 200
 
 ################################################################################
 ### (4) Running the app
@@ -91,6 +148,9 @@ if __name__ == "__main__":
 
     # Use debug toolbar
     DebugToolbarExtension(app)
+
+    # Setup Spotify
+    # spotify_login()
 
     # Connect to database and run the app
     connect_to_db(app)

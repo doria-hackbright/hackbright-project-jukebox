@@ -35,7 +35,7 @@ def connection_state_listener(session):
 loop = spotify.EventLoop(session)
 loop.start()
 
-# Register event listerners
+# Register event listeners
 session.on(spotify.SessionEvent.CONNECTION_STATE_UPDATED,
            connection_state_listener)
 

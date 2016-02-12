@@ -1,8 +1,7 @@
-//Controlling Search
-
 $(function() {
-    $("#search-toggle").click(function() {
-        $("#search-form").toggle(750);
-    });
 
+    // Search toggling
+    $("#search-toggle").click(function() {
+        $("#search-form").slideToggle(750);
+    });
 });
