@@ -128,10 +128,32 @@ def new_song():
 def delete_jukebox(jukebox_id):
     """Deletes a jukebox and all of its admin, guests, votes, and songs."""
 
-    # Find all the guests, admins, votes, and songs associated with the jukebox
-    
+    current_jukebox = Jukebox.query.get(jukebox_id)
 
-    return "Hello", 200
+    for admin in current_jukebox.admin:
+        db.session.delete(admin)
+
+    for guest in current_jukebox.guests:
+        db.session.delete(guest)
+
+    for song in current_jukebox.songs:
+        db.session.delete(song)
+
+    for vote in current_jukebox.votes:
+        db.session.delete(vote)
+
+    db.session.delete(current_jukebox)
+    db.session.commit()
+
+    return redirect(url_for('shows_goodbye'))
+
+
+@app.route("/goodbye", methods=['GET'])
+def shows_goodbye():
+    """Says goodbye to the user."""
+
+    return render_template('goodbye.html')
+
 
 ################################################################################
 ### (4) Running the app

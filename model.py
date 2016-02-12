@@ -84,6 +84,9 @@ class Jukebox(db.Model):
     songs = db.relationship('Song',
                             secondary='song_user_relations',
                             backref='jukeboxes')
+    votes = db.relationship('Vote',
+                            secondary='song_user_relations',
+                            backref='jukeboxes')
 
     @classmethod
     def create(cls):
