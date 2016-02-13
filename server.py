@@ -26,30 +26,25 @@ app = Flask(__name__)
 ### (2) Supporting functions
 
 
-def connection_state_listener(session):
-    """A function that sets the logged in thread event to true.
-
-    The thread signals the event and other threads wait for it."""
-
-    if session.connection.state is spotify.ConnectionState.LOGGED_IN:
-        logged_in_event.set()
-
-        print "I'M LOGGED IN."
-
-
 def spotify_login(session):
     """Logs into Spotify to access the features."""
 
     # Set up an event for "logged_in" and a listener for the connection state
-    logged_in_event = threading.Event()
+    _logged_in = threading.Event()
 
-    # Start the Pyspotify event loop
+    def _logged_in_listener(session):
+        """A function that sets the logged in thread event to true."""
+
+        if session.connection.state is spotify.ConnectionState.LOGGED_IN:
+            _logged_in.set()
+
+    # Set up Pyspotify event loop
     loop = spotify.EventLoop(session)
     loop.start()
 
     # Register event listener
     session.on(spotify.SessionEvent.CONNECTION_STATE_UPDATED,
-               connection_state_listener)
+               _logged_in_listener)
 
     # Login using environment variables
     session.login(os.environ['SPOTIFY_UN'], os.environ['SPOTIFY_PW'])
@@ -57,9 +52,11 @@ def spotify_login(session):
     # Blocks the thread until the event becomes True, which will be triggered
     # by function connection_state_listener (success handler), attached to the
     # session event listener
-    logged_in_event.wait()
+    _logged_in.wait()
 
-    return True
+    print "#######################"
+    print "logged in: ", session.connection.state
+    print "#######################"
 
 
 ################################################################################
@@ -125,7 +122,7 @@ def new_guest():
 def new_song():
     """Adds a new song to database."""
 
-    # First I need to make a call to Spotify
+    # First I need to make a call to Spotify and
 
 
 @app.route("/jukebox/<jukebox_id>/delete", methods=['POST'])
@@ -176,7 +173,8 @@ if __name__ == "__main__":
     DebugToolbarExtension(app)
 
     # Setup Spotify
-    # spotify_login()
+    session = spotify.Session()
+    spotify_login(session)
 
     # Connect to database and run the app
     connect_to_db(app)
