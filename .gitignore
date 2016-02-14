@@ -1,6 +1,5 @@
 venv/
 tmp/
-notes/
 .DS_Store
 *.pyc
 secrets.sh
