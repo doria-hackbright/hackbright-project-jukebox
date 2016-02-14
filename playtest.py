@@ -69,7 +69,7 @@ session.on(spotify.SessionEvent.END_OF_TRACK, end_of_track_signal)
 audio = spotify.PortAudioSink(session)
 
 # Play a track
-track_uri = "spotify:track:230yvxJzwVW8tH4Wb6gcvj"
+track_uri = "spotify:track:5GCrBPWKpgH4H3bLLnvWm7"
 track = session.get_track(track_uri).load()
 session.player.load(track)
 session.player.play()
