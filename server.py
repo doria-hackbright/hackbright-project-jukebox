@@ -139,6 +139,9 @@ def new_song():
 def add_song_to_jukebox():
     """Adds a song chosen from the search to the jukebox and database"""
 
+    print "WHEEEEE"
+    return "OK", 200
+
 
 @app.route("/jukebox/<jukebox_id>/delete", methods=['POST'])
 def delete_jukebox(jukebox_id):
