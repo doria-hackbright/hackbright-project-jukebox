@@ -6,11 +6,12 @@ import os
 import threading
 
 # Flask
-from flask import Flask, render_template, redirect, request, flash, session, url_for
+from flask import Flask, render_template, redirect, request, flash, session, url_for, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 
 # Other External Libraries
 import spotify
+import requests
 
 # Models (and Bottles)
 from model import *
@@ -54,9 +55,9 @@ def spotify_login(session):
     # session event listener
     _logged_in.wait()
 
-    print "#######################"
+    print "#######################################"
     print "logged in: ", session.connection.state
-    print "#######################"
+    print "######################################"
 
 
 ################################################################################
@@ -118,11 +119,25 @@ def new_guest():
     return redirect(url_for('jukebox_public', jukebox_id=jukebox_id))
 
 
-@app.route("/song", methods=['POST'])
+@app.route("/songs", methods=['GET'])
 def new_song():
-    """Adds a new song to database."""
+    """Shows search resuts for songs."""
 
-    # First I need to make a call to Spotify and
+    # Retrieve the search term from the form
+    search_term = request.args.get('search-term')
+    print search_term
+
+    # Use requests to make a call to Spotify Web API
+    results = requests.get('https://api.spotify.com/v1/search?q=' +
+                           search_term +
+                           "&type=track&limit=10")
+
+    return jsonify(results.json())
+
+
+@app.route("/song/add", methods=['POST'])
+def add_song_to_jukebox():
+    """Adds a song chosen from the search to the jukebox and database"""
 
 
 @app.route("/jukebox/<jukebox_id>/delete", methods=['POST'])
@@ -160,6 +175,7 @@ def shows_goodbye():
 ### (4) Running the app
 
 if __name__ == "__main__":
+
     # Output in console and needs to be True to invoke DebugToolbarExtension
     app.debug = True
 
@@ -171,10 +187,6 @@ if __name__ == "__main__":
 
     # Use debug toolbar
     DebugToolbarExtension(app)
-
-    # Setup Spotify
-    session = spotify.Session()
-    spotify_login(session)
 
     # Connect to database and run the app
     connect_to_db(app)

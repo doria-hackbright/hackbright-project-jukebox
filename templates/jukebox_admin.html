@@ -31,10 +31,10 @@
                 <h5><i class="fa fa-search-plus"></i> Click here to add a new song!</h5>
             </div>
             <div id="search-form" style="display:none;" class="search">
-                <form>
+                <form action="/songs" method="get">
                     <label>
                         I want to listen to:
-                        <input type="text" name="search-term">
+                        <input type="text" name="search-term" id="search-term">
                     </label>
                     <input type="submit" value="Search!">
                 </form>
