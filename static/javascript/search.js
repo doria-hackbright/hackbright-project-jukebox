@@ -13,7 +13,7 @@ $(function() {
 
             console.log(data);
 
-            $("#search-results").slideDown(750);
+            $("#search-results").slideDown(250);
             var search_results = "";
 
             for (var i = 0; i < data['tracks']['items'].length; i++) {
@@ -21,7 +21,7 @@ $(function() {
                                   data['tracks']['items'][i]['name'] +
                                   ", <strong>Artist:</strong> " +
                                   data['tracks']['items'][i]['artists'][0]['name'] +
-                                  "<form action='/song/add' method='post'>" +
+                                  "<form action='/song/add' method='post' class='add-song'>" +
                                   "<input type='hidden' name='song-name' value=" +
                                   data['tracks']['items'][i]['name'] +
                                   "><input type='hidden' name='song-uri' value=" +
@@ -30,6 +30,24 @@ $(function() {
             }
 
             $("#search-results").html(search_results);
+
+            // Adding new songs - event listener
+            $('.add-song').submit(function (evt) {
+              evt.preventDefault();
+
+              formData = $(this).serialize();
+
+              $.post('/song/add', formData, function (data) {
+                  
+                  console.log(data);
+                  $('#search-flash').text(data).fadeIn();
+                  
+                  setTimeout(function() {
+                    $('#search-flash').fadeOut();
+                  }, 2500);
+                
+                });
+            });
         });
     });
 });

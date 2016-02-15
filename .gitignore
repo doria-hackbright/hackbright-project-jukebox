@@ -5,3 +5,4 @@ notes/
 *.pyc
 secrets.sh
 spotify_appkey.key
+sample_data.txt

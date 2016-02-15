@@ -13,6 +13,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 #search-toggle {
-    color:#FFF;
-    background-color:#33C3F0;
+    color: #FFF;
+    background-color: #33C3F0;
+}
+
+#search-flash {
+    color: #3c763d;
+    background-color: #dff0d8;
+    padding: 1em;
 }
