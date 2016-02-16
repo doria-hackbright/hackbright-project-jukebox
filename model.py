@@ -3,7 +3,7 @@
 # Flask and SQLAlchemy
 from flask_sqlalchemy import SQLAlchemy
 
-# Other External Libraries
+# Other Libraries
 import uuid
 
 
@@ -81,6 +81,7 @@ class Jukebox(db.Model):
 
     admin = db.relationship('JukeboxAdmin', backref='jukebox')
     guests = db.relationship('JukeboxGuest', backref='jukebox')
+    relations = db.relationship('SongUserRelationship', backref='jukebox')
     songs = db.relationship('Song',
                             secondary='song_user_relations',
                             backref='jukeboxes')
@@ -145,7 +146,7 @@ class Vote(db.Model):
                        vote_value=vote_value)
 
         db.session.add(new_vote)
-        db.commit()
+        db.session.commit()
 
         return new_vote
 
@@ -171,6 +172,19 @@ class SongUserRelationship(db.Model):
     timestamp = db.Column(db.DateTime,
                           server_default=db.func.now(),
                           nullable=False)
+
+    @classmethod
+    def create(cls, song_id, jukebox_id, user_id):
+        """Generate a new song/user relationship for jukebox."""
+
+        new_relationship = cls(song_id=song_id,
+                               jukebox_id=jukebox_id,
+                               user_id=user_id)
+
+        db.session.add(new_relationship)
+        db.session.commit()
+
+        return new_relationship
 
 
 ################################################################################

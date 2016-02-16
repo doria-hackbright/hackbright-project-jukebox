@@ -6,7 +6,7 @@ import os
 import threading
 
 # Flask
-from flask import Flask, render_template, redirect, request, flash, session, url_for, jsonify
+from flask import Flask, render_template, redirect, request, session, url_for, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 
 # Other External Libraries
@@ -65,21 +65,35 @@ def spotify_login(session):
 
 @app.route("/")
 def homepage():
-    """Renders the homepage where users can create a jukebox."""
+    """Renders the homepage where users can create a jukebox.
 
-    return render_template('homepage.html')
+    If someone is already a guest or admin user of a jukebox,
+    it will take them to their respective jukebox pages instead."""
+
+    jukebox_id = session.get('jukebox_id')
+
+    if session.get('guest_id'):
+        # if the user is already a guest of a jukebox
+        return redirect(url_for('jukebox_public', jukebox_id=jukebox_id))
+
+    elif session.get('admin_id'):
+        # if the user is already an admint of a jukebox
+        return redirect(url_for('jukebox_private', jukebox_id=jukebox_id))
+
+    else:
+        return render_template('homepage.html')
 
 
 @app.route("/jukebox", methods=['POST'])
 def new_jukebox():
-    """Renders the full jukebox in admin view."""
+    """Creates new jukebox and admin, adds to db, renders admin view."""
 
     new_jukebox = Jukebox.create()
     new_jukebox_id = new_jukebox.jukebox_id
     session['jukebox_id'] = new_jukebox_id
 
     new_user = JukeboxAdmin.create(jukebox_id=new_jukebox_id)
-    session['user_id'] = new_user.admin_id
+    session['admin_id'] = new_user.admin_id
 
     return redirect(url_for('jukebox_private', jukebox_id=new_jukebox_id))
 
@@ -107,19 +121,16 @@ def new_guest():
     """Creates a new guest."""
 
     jukebox_id = request.form.get('jukebox_id')
-    print jukebox_id
-    new_user = JukeboxGuest.create(jukebox_id)
-    print new_user
-    print new_user.guest_id
-    session['user_id'] = new_user.guest_id
-    print session['user_id']
 
-    print "YAY, NEW GUEST!"
+    if not session.get('jukebox_id'):
+        new_user = JukeboxGuest.create(jukebox_id)
+        session['guest_id'] = new_user.guest_id
+        session['jukebox_id'] = jukebox_id
 
     return redirect(url_for('jukebox_public', jukebox_id=jukebox_id))
 
 
-@app.route("/songs", methods=['GET'])
+@app.route("/search", methods=['GET'])
 def new_song():
     """Shows search resuts for songs."""
 
@@ -143,10 +154,36 @@ def add_song_to_jukebox():
     song_uri = request.form.get('song-uri')
     song_name = request.form.get('song-name')
 
-    # Create a new song to add into the database
-    new_song = Song.create(song_uri)
+    # Check if the song is already in the database
+    # If it is not there, add it
+    if not Song.query.filter(Song.spotify_uri == song_uri).first():
+        # Create a new song to add into the database
+        new_song = Song.create(spotify_uri=song_uri)
+    else:
+        new_song = Song.query.filter(Song.spotify_uri == song_uri).one()
+
+    relation = SongUserRelationship.create(song_id=new_song.song_id,
+                                           jukebox_id=session['jukebox_id'],
+                                           user_id=session.get('guest_id'))
 
     return song_name + " has been added."
+
+
+@app.route("/jukebox/<jukebox_id>/playlist", methods=['POST'])
+def show_playlist(jukebox_id):
+    """Render playlist for the specific jukebox."""
+
+    # Query for a list of songs in the jukebox
+    song_list = Jukebox.query.get(jukebox_id).songs
+    print song_list
+
+    # Get their votes
+
+    # Order songs in jukebox
+
+    # Send back JSON to render DOM on Javascript (the funnest)
+
+    return "OKAY", 200
 
 
 @app.route("/jukebox/<jukebox_id>/delete", methods=['POST'])
@@ -155,20 +192,22 @@ def delete_jukebox(jukebox_id):
 
     current_jukebox = Jukebox.query.get(jukebox_id)
 
-    for admin in current_jukebox.admin:
-        db.session.delete(admin)
+    for vote in current_jukebox.votes:
+        db.session.delete(vote)
+
+    for relation in current_jukebox.relations:
+        db.session.delete(relation)
 
     for guest in current_jukebox.guests:
         db.session.delete(guest)
 
-    for song in current_jukebox.songs:
-        db.session.delete(song)
-
-    for vote in current_jukebox.votes:
-        db.session.delete(vote)
+    for admin in current_jukebox.admin:
+        db.session.delete(admin)
 
     db.session.delete(current_jukebox)
     db.session.commit()
+
+    session.clear()
 
     return redirect(url_for('shows_goodbye'))
 
