@@ -21,7 +21,6 @@ $(function() {
                    "</tr>";
 
     $('#playlist-display').append(playlist_row);
-
       };
 
   // Search toggling
@@ -82,8 +81,7 @@ $(function() {
               var playlist_route = window.location.href.slice(0,-6) + "/playlist";
 
               socket.send(JSON.stringify(data));
-
-          
+ 
               });
           });
       });

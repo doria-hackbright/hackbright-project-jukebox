@@ -33,13 +33,22 @@ app = Flask(__name__)
 ### (2) Supporting functions and classes
 
 class WebSocket(WebSocketHandler):
+
+    connections = set()
+
     def open(self):
         print "Socket connected!"
+        self.connections.add(self)
 
     def on_message(self, message):
-        self.write_message(message)
+
+        # Write the update to all connections
+        for c in self.connections:
+            c.write_message(message)
 
     def on_close(self):
+
+        print self.close_code, self.close_reason
         print "Socket disconnected!"
 
 
@@ -177,6 +186,7 @@ def add_song_to_jukebox():
     if not Song.query.filter(Song.spotify_uri == song_uri).first():
         # Create a new song to add into the database
         new_song = Song.create(spotify_uri=song_uri)
+
     else:
         new_song = Song.query.filter(Song.spotify_uri == song_uri).one()
 
