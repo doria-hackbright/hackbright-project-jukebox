@@ -5,11 +5,22 @@ $(function() {
 
   socket.onopen = function() {
     socket.send("Socket Connected");
+    console.log("Socket Opened");
     };
 
   socket.onmessage = function(evt) {
-
     console.log(evt);
+
+    var song_obj = JSON.parse(evt['data']);
+
+    playlist_row = "<tr>" +
+                   "<td>" + song_obj['song_name'] + "</td>" +
+                   "<td>" + song_obj['song_artist'] + "</td>" +
+                   "<td>" + song_obj['song_album'] + "</td>" +
+                   "<td>" + song_obj['song_votes'] + "</td>" +
+                   "</tr>";
+
+    $('#playlist-display').append(playlist_row);
 
       };
 
@@ -33,6 +44,7 @@ $(function() {
               
               var song_name = data['tracks']['items'][i]['name'],
                   artist = data['tracks']['items'][i]['artists'][0]['name'],
+                  album = data['tracks']['items'][i]['album']['name'],
                   uri = data['tracks']['items'][i]['uri'];
 
 
@@ -40,13 +52,15 @@ $(function() {
                                 ", <strong>Artist:</strong> " + artist +
                                 "<form action='/song/add' method='post' class='add-song'>" +
                                 "<input type='hidden' name='song-name' value=" +
-                                "'" + song_name + "'" +
-                                "><input type='hidden' name='song-uri' value=" +
-                                "'" + uri + "'" +
-                                "><input type='submit' value='Add to playlist'></form></div>";
+                                "'" + song_name + "'>" +
+                                "<input type='hidden' name='song-artist' value=" +
+                                "'" + artist + "'>" +
+                                "<input type='hidden' name='song-album' value=" +
+                                "'" + album + "'>" +
+                                "<input type='hidden' name='song-uri' value=" +
+                                "'" + uri + "'>" +
+                                "<input type='submit' value='Add to playlist'></form></div>";
           }
-
-          console.log("whee");
 
           $("#search-results").html(search_results);
 
@@ -59,7 +73,7 @@ $(function() {
             $.post('/song/add', formData, function (data) {
                 
                 console.log(data);
-                $('#search-flash').text(data).fadeIn();
+                $('#search-flash').text(data['song_name'] + " has been added.").fadeIn();
                 
                 setTimeout(function() {
                   $('#search-flash').fadeOut();
@@ -67,11 +81,9 @@ $(function() {
 
               var playlist_route = window.location.href.slice(0,-6) + "/playlist";
 
-              $.post(playlist_route, function (data) {
-                  console.log(data);
-                  $("#playlist-display").append("<td>" + data + "</td>");
+              socket.send(JSON.stringify(data));
 
-                });
+          
               });
           });
       });

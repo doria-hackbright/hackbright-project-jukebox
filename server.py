@@ -37,8 +37,7 @@ class WebSocket(WebSocketHandler):
         print "Socket connected!"
 
     def on_message(self, message):
-        # halp.
-        pass
+        self.write_message(message)
 
     def on_close(self):
         print "Socket disconnected!"
@@ -170,6 +169,8 @@ def add_song_to_jukebox():
     # Pull the information that is being submitted
     song_uri = request.form.get('song-uri')
     song_name = request.form.get('song-name')
+    song_artist = request.form.get('song-artist')
+    song_album = request.form.get('song-album')
 
     # Check if the song is already in the database
     # If it is not there, add it
@@ -183,10 +184,17 @@ def add_song_to_jukebox():
                                            jukebox_id=session['jukebox_id'],
                                            user_id=session.get('guest_id'))
 
-    return song_name + " has been added."
+    # Construct song information
+    response_dict = {"song_name": song_name,
+                     "song_artist": song_artist,
+                     "song_album": song_album,
+                     "song_uri": song_uri,
+                     "song_votes": 0}
+
+    return jsonify(response_dict)
 
 
-@app.route("/jukebox/<jukebox_id>/playlist", methods=['POST'])
+@app.route("/jukebox/<jukebox_id>/playlist", methods=['GET'])
 def show_playlist(jukebox_id):
     """Render playlist for the specific jukebox."""
 
