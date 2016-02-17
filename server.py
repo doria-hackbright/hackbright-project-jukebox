@@ -9,6 +9,12 @@ import threading
 from flask import Flask, render_template, redirect, request, session, url_for, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 
+# Tornado
+from tornado.wsgi import WSGIContainer
+from tornado.web import Application, FallbackHandler
+from tornado.websocket import WebSocketHandler
+from tornado.ioloop import IOLoop
+
 # Other External Libraries
 import spotify
 import requests
@@ -24,7 +30,18 @@ app = Flask(__name__)
 
 
 ################################################################################
-### (2) Supporting functions
+### (2) Supporting functions and classes
+
+class WebSocket(WebSocketHandler):
+    def open(self):
+        print "Socket connected!"
+
+    def on_message(self, message):
+        # halp.
+        pass
+
+    def on_close(self):
+        print "Socket disconnected!"
 
 
 def spotify_login(session):
@@ -173,17 +190,23 @@ def add_song_to_jukebox():
 def show_playlist(jukebox_id):
     """Render playlist for the specific jukebox."""
 
-    # Query for a list of songs in the jukebox
-    song_list = Jukebox.query.get(jukebox_id).songs
-    print song_list
+    # Query for a list of songs in the jukebox specific to that jukebox
+    playlist = Jukebox.query.get(jukebox_id).relations
+    print playlist
 
+    # TODO:
     # Get their votes
-
     # Order songs in jukebox
 
-    # Send back JSON to render DOM on Javascript (the funnest)
+    playlist_dict = {}
 
-    return "OKAY", 200
+    # Send back JSON to render DOM on Javascript (the funnest)
+    for r in playlist:
+        song_id = r.song.spotify_uri[14:]
+        song_data = requests.get("https://api.spotify.com/v1/tracks/" + song_id)
+        print song_data.json()['name'], song_data.json()['artists'][0]['name']
+
+    return jsonify(playlist_dict)
 
 
 @app.route("/jukebox/<jukebox_id>/delete", methods=['POST'])
@@ -238,4 +261,12 @@ if __name__ == "__main__":
 
     # Connect to database and run the app
     connect_to_db(app)
-    app.run()
+    # app.run()
+
+    container = WSGIContainer(app)
+    server = Application([
+        (r'/websocket/', WebSocket),
+        (r'.*', FallbackHandler, dict(fallback=container))
+    ])
+    server.listen(5000)
+    IOLoop.instance().start()

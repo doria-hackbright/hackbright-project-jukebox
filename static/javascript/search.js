@@ -1,15 +1,17 @@
 $(function() {
   
   // Using WebSockets
-  // var socket = new WebSocket("ws://" + document.domain + ":5000/websocket/");
+  var socket = new WebSocket("ws://" + document.domain + ":5000/websocket/");
 
-  // socket.onopen = function() {
-  //   socket.send("Socket Connected");
-  // }
+  socket.onopen = function() {
+    socket.send("Socket Connected");
+    };
 
-  // socket.onupdate = function(playlist) {
-    // Render playlist
-  // }
+  socket.onmessage = function(evt) {
+
+    console.log(evt);
+
+      };
 
   // Search toggling
   $("#search-toggle").click(function() {
@@ -42,10 +44,9 @@ $(function() {
                                 "><input type='hidden' name='song-uri' value=" +
                                 "'" + uri + "'" +
                                 "><input type='submit' value='Add to playlist'></form></div>";
-
-              console.log(search_results);
-              console.log("whee");
           }
+
+          console.log("whee");
 
           $("#search-results").html(search_results);
 
@@ -64,20 +65,13 @@ $(function() {
                   $('#search-flash').fadeOut();
                 }, 2500);
 
-            var playlist_route = window.location.href.slice(0,-6) + "/playlist";
+              var playlist_route = window.location.href.slice(0,-6) + "/playlist";
 
-            $.post(playlist_route, function (data) {
-              
-              console.log("Rendering a playlist.");
+              $.post(playlist_route, function (data) {
+                  console.log(data);
+                  $("#playlist-display").append("<td>" + data + "</td>");
 
-              // Receive JSON data back
-
-              // Parse and populate the table
-
-              // Remove Jinja template
-
-            });
-              
+                });
               });
           });
       });

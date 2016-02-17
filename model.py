@@ -173,6 +173,8 @@ class SongUserRelationship(db.Model):
                           server_default=db.func.now(),
                           nullable=False)
 
+    song = db.relationship('Song', backref="relations")
+
     @classmethod
     def create(cls, song_id, jukebox_id, user_id):
         """Generate a new song/user relationship for jukebox."""
