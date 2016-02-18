@@ -6,6 +6,7 @@ $(function() {
     socket.onopen = function () {
       // Get Jukebox id
       $.get("/jukebox_id", function (data) {
+        console.log(data);
         socket.send('{"jukebox_id" : ' + '"' + data + '" ,' +
                     '"first_load" : ' + '"yes"' + '}');
       });
@@ -77,8 +78,10 @@ $(function() {
 
             formData = $(this).serialize();
 
+            console.log(formData);
+
             $.post('/song/add', formData, function (data) {
-                
+
                 console.log(data);
                 $('#search-flash').text(data['song_name'] + " has been added.").fadeIn();
                 

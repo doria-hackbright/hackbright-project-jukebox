@@ -30,7 +30,7 @@ app = Flask(__name__)
 
 
 ################################################################################
-### (2) Supporting functions and classes
+### (2) WebSocket Setup
 
 
 class WebSocket(WebSocketHandler):
@@ -73,6 +73,10 @@ class WebSocket(WebSocketHandler):
         print "Socket disconnected!"
 
 
+################################################################################
+### (3) Supporting Functions
+
+
 def spotify_login(session):
     """Logs into Spotify to access the features."""
 
@@ -107,7 +111,8 @@ def spotify_login(session):
 
 
 ################################################################################
-### (3) App routes
+### (4) App routes
+
 
 @app.route("/")
 def homepage():
@@ -164,10 +169,18 @@ def jukebox_private(jukebox_id):
 
 
 @app.route("/jukebox_id", methods=['GET'])
-def admin_jukebox_id():
+def jukebox_id():
     """Returns jukebox_id."""
 
-    return session['jukebox_id']
+    return session.get('jukebox_id')
+
+
+@app.route("/guest_id", methods=['GET'])
+def guest_id():
+    """Returns guest_id."""
+
+    return jsonify({"guest_id": session.get('guest_id')})
+    # return session.get('guest_id', "no")
 
 
 @app.route("/guest", methods=['POST'])
@@ -175,9 +188,11 @@ def new_guest():
     """Creates a new guest."""
 
     jukebox_id = request.form.get('jukebox_id')
+    print jukebox_id
 
-    if not session.get('jukebox_id'):
-        new_user = JukeboxGuest.create(jukebox_id)
+    if not session.get('guest_id'):
+        new_user = JukeboxGuest.create(jukebox_id=jukebox_id)
+        print new_user.guest_id
         session['guest_id'] = new_user.guest_id
         session['jukebox_id'] = jukebox_id
 
@@ -232,7 +247,8 @@ def add_song_to_jukebox():
                      "song_album": song_album,
                      "song_uri": song_uri,
                      "song_votes": 0,
-                     "jukebox_id": session['jukebox_id']}
+                     "jukebox_id": session['jukebox_id'],
+                     "guest_id": session.get('guest_id')}
 
     return jsonify(response_dict)
 
@@ -294,7 +310,8 @@ def shows_goodbye():
 
 
 ################################################################################
-### (4) Running the app
+### (5) Running the app
+
 
 if __name__ == "__main__":
 
