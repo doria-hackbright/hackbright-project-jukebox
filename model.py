@@ -110,12 +110,18 @@ class Song(db.Model):
 
     song_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     spotify_uri = db.Column(db.String(256), nullable=False)
+    song_name = db.Column(db.String(256), nullable=False)
+    song_artist = db.Column(db.String(256), nullable=True)
+    song_album = db.Column(db.String(256), nullable=True)
 
     @classmethod
-    def create(cls, spotify_uri):
+    def create(cls, spotify_uri, song_name, song_artist, song_album):
         """Add a new song to the database."""
 
-        new_song = cls(spotify_uri=spotify_uri)
+        new_song = cls(spotify_uri=spotify_uri,
+                       song_name=song_name,
+                       song_artist=song_artist,
+                       song_album=song_album)
 
         db.session.add(new_song)
         db.session.commit()

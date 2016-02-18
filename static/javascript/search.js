@@ -1,27 +1,35 @@
 $(function() {
-  
-  // Using WebSockets
-  var socket = new WebSocket("ws://" + document.domain + ":5000/websocket/");
 
-  socket.onopen = function() {
-    socket.send("Socket Connected");
-    console.log("Socket Opened");
+    // Start WebSockets
+    var socket = new WebSocket("ws://" + document.domain + ":5000/websocket/");
+
+    socket.onopen = function () {
+      // Get Jukebox id
+      $.get("/jukebox_id", function (data) {
+        socket.send('{"jukebox_id" : ' + '"' + data + '" ,' +
+                    '"first_load" : ' + '"yes"' + '}');
+      });
+      console.log("Socket Opened");
     };
 
-  socket.onmessage = function(evt) {
+    socket.onmessage = function(evt) {
     console.log(evt);
 
     var song_obj = JSON.parse(evt['data']);
 
-    playlist_row = "<tr>" +
-                   "<td>" + song_obj['song_name'] + "</td>" +
-                   "<td>" + song_obj['song_artist'] + "</td>" +
-                   "<td>" + song_obj['song_album'] + "</td>" +
-                   "<td>" + song_obj['song_votes'] + "</td>" +
-                   "</tr>";
+    // If data contains song, renders new row to sockets.
+    if (song_obj['song_name'] !== undefined) {
+      playlist_row = "<tr>" +
+                     "<td>" + song_obj['song_name'] + "</td>" +
+                     "<td>" + song_obj['song_artist'] + "</td>" +
+                     "<td>" + song_obj['song_album'] + "</td>" +
+                     "<td>" + song_obj['song_votes'] + "</td>" +
+                     "</tr>";
 
-    $('#playlist-display').append(playlist_row);
-      };
+      $('#playlist-display').append(playlist_row);
+      
+      }
+    };
 
   // Search toggling
   $("#search-toggle").click(function() {

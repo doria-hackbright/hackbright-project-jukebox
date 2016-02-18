@@ -1,9 +1,9 @@
 """Office Jukebox: Server"""
 
 # Standard Python Libraries
-from datetime import datetime
 import os
 import threading
+import json
 
 # Flask
 from flask import Flask, render_template, redirect, request, session, url_for, jsonify
@@ -32,18 +32,39 @@ app = Flask(__name__)
 ################################################################################
 ### (2) Supporting functions and classes
 
+
 class WebSocket(WebSocketHandler):
 
-    connections = set()
+    connections = dict()
 
     def open(self):
         print "Socket connected!"
-        self.connections.add(self)
 
     def on_message(self, message):
 
+        # Adding the connection to the set
+        jukebox_id = json.loads(message)['jukebox_id']
+        print jukebox_id
+
+        if json.loads(message).get('first_load'):
+            self.connections.setdefault(jukebox_id, set()).add(self)
+
+            # Query for all the song relations for the playlist so far
+            song_relationship_list = Jukebox.query.get(jukebox_id).relations
+
+            # If there are existing relations, render the playlist for this connection
+            if song_relationship_list:
+
+                # Construct song_relationship dictionary
+                for r in song_relationship_list:
+                    playlist_row = {"song_name": r.song.song_name,
+                                    "song_artist": r.song.song_artist,
+                                    "song_album": r.song.song_album,
+                                    "song_votes": 0}
+                    self.write_message(playlist_row)
+
         # Write the update to all connections
-        for c in self.connections:
+        for c in self.connections[jukebox_id]:
             c.write_message(message)
 
     def on_close(self):
@@ -136,9 +157,17 @@ def jukebox_private(jukebox_id):
 
     public_url = "localhost:5000/jukebox/" + jukebox_id
     url = "/jukebox/" + jukebox_id + "/delete"
+
     return render_template('jukebox_admin.html',
                            public_url=public_url,
                            url=url)
+
+
+@app.route("/jukebox_id", methods=['GET'])
+def admin_jukebox_id():
+    """Returns jukebox_id."""
+
+    return session['jukebox_id']
 
 
 @app.route("/guest", methods=['POST'])
@@ -185,7 +214,10 @@ def add_song_to_jukebox():
     # If it is not there, add it
     if not Song.query.filter(Song.spotify_uri == song_uri).first():
         # Create a new song to add into the database
-        new_song = Song.create(spotify_uri=song_uri)
+        new_song = Song.create(spotify_uri=song_uri,
+                               song_name=song_name,
+                               song_artist=song_artist,
+                               song_album=song_album)
 
     else:
         new_song = Song.query.filter(Song.spotify_uri == song_uri).one()
@@ -199,7 +231,8 @@ def add_song_to_jukebox():
                      "song_artist": song_artist,
                      "song_album": song_album,
                      "song_uri": song_uri,
-                     "song_votes": 0}
+                     "song_votes": 0,
+                     "jukebox_id": session['jukebox_id']}
 
     return jsonify(response_dict)
 
