@@ -138,17 +138,17 @@ class Vote(db.Model):
     song_user_id = db.Column(db.Integer,
                              db.ForeignKey('song_user_relations.song_user_id'),
                              nullable=False)
-    guest_id = db.Column(db.Integer,
+    voter_id = db.Column(db.Integer,
                          db.ForeignKey('guest_users.guest_id'),
                          nullable=False)
     vote_value = db.Column(db.Integer, nullable=False)
 
     @classmethod
-    def create(cls, song_user_id, guest_id, vote_value):
+    def create(cls, song_user_id, voter_id, vote_value):
         """Generate a new upvote/downvote."""
 
         new_vote = cls(song_user_id=song_user_id,
-                       guest_id=guest_id,
+                       voter_id=voter_id,
                        vote_value=vote_value)
 
         db.session.add(new_vote)
@@ -180,6 +180,7 @@ class SongUserRelationship(db.Model):
                           nullable=False)
 
     song = db.relationship('Song', backref="relations")
+    votes = db.relationship('Vote', backref="relation")
 
     @classmethod
     def create(cls, song_id, jukebox_id, user_id):

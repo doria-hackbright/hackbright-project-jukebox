@@ -4,6 +4,7 @@
 import os
 import threading
 import json
+from collections import OrderedDict
 
 # Flask
 from flask import Flask, render_template, redirect, request, session, url_for, jsonify
@@ -34,13 +35,17 @@ app = Flask(__name__)
 
 
 class WebSocket(WebSocketHandler):
+    """Set up WebSocket Handlers."""
 
     connections = dict()
 
     def open(self):
+        """Runs when WebSocket is open."""
+
         print "Socket connected!"
 
     def on_message(self, message):
+        """Runs when a message is recieved from the WebSocket."""
 
         # Adding the connection to the set
         jukebox_id = json.loads(message)['jukebox_id']
@@ -50,17 +55,28 @@ class WebSocket(WebSocketHandler):
             self.connections.setdefault(jukebox_id, set()).add(self)
 
             # Query for all the song relations for the playlist so far
-            song_relationship_list = Jukebox.query.get(jukebox_id).relations
+            song_relationship_list = SongUserRelationship.query.filter_by(jukebox_id=jukebox_id).order_by('timestamp').all()
+
+            # Get all the votes for each song and put it in a dictionary
+            song_relationship_dict = dict()
+
+            for r in song_relationship_list:
+                if r.votes:
+                    song_relationship_dict.setdefault(r, sum(vote.vote_value for vote in r.votes))
+                else:
+                    song_relationship_dict.setdefault(r, 0)
 
             # If there are existing relations, render the playlist for this connection
-            if song_relationship_list:
+            if song_relationship_dict:
 
                 # Construct song_relationship dictionary
-                for r in song_relationship_list:
+                for r in sorted(song_relationship_dict.keys(), key=song_relationship_dict.get):
                     playlist_row = {"song_name": r.song.song_name,
                                     "song_artist": r.song.song_artist,
                                     "song_album": r.song.song_album,
-                                    "song_votes": 0}
+                                    "song_user_id": r.song_user_id,
+                                    "guest_id": r.user_id,
+                                    "song_votes": song_relationship_dict[r]}
                     self.write_message(playlist_row)
 
         # Write the update to all connections
@@ -68,8 +84,9 @@ class WebSocket(WebSocketHandler):
             c.write_message(message)
 
     def on_close(self):
+        """Runs when a socket is closed."""
 
-        print self.close_code, self.close_reason
+        print "Code:", self.close_code, "Reason:", self.close_reason
         print "Socket disconnected!"
 
 
@@ -177,10 +194,10 @@ def jukebox_id():
 
 @app.route("/guest_id", methods=['GET'])
 def guest_id():
-    """Returns guest_id."""
+    """Returns guest_id and jukebox_id they belong to."""
 
-    return jsonify({"guest_id": session.get('guest_id')})
-    # return session.get('guest_id', "no")
+    return jsonify({"jukebox_id": session.get('jukebox_id'),
+                    "guest_id": session.get('guest_id')})
 
 
 @app.route("/guest", methods=['POST'])
@@ -192,7 +209,6 @@ def new_guest():
 
     if not session.get('guest_id'):
         new_user = JukeboxGuest.create(jukebox_id=jukebox_id)
-        print new_user.guest_id
         session['guest_id'] = new_user.guest_id
         session['jukebox_id'] = jukebox_id
 
@@ -247,33 +263,40 @@ def add_song_to_jukebox():
                      "song_album": song_album,
                      "song_uri": song_uri,
                      "song_votes": 0,
+                     "song_user_id": relation.song_user_id,
                      "jukebox_id": session['jukebox_id'],
                      "guest_id": session.get('guest_id')}
 
     return jsonify(response_dict)
 
 
-@app.route("/jukebox/<jukebox_id>/playlist", methods=['GET'])
-def show_playlist(jukebox_id):
-    """Render playlist for the specific jukebox."""
+@app.route("/jukebox/<jukebox_id>/vote", methods=["POST"])
+def create_vote(jukebox_id):
+    """Guests can send votes for songs."""
 
-    # Query for a list of songs in the jukebox specific to that jukebox
-    playlist = Jukebox.query.get(jukebox_id).relations
-    print playlist
+    vote_value = request.form.get('vote-value')
+    song_user_id = request.form.get('song-user-relation')
+    guest_id = request.form.get('guest-id')
+    voter_id = request.form.get('voter-id')
 
-    # TODO:
-    # Get their votes
-    # Order songs in jukebox
+    print vote_value, song_user_id, guest_id, voter_id
 
-    playlist_dict = {}
+    # Check that the song was not added by the user
+    if voter_id == guest_id:
+        return "Hey, you can't vote for a song you added!"
 
-    # Send back JSON to render DOM on Javascript (the funnest)
-    for r in playlist:
-        song_id = r.song.spotify_uri[14:]
-        song_data = requests.get("https://api.spotify.com/v1/tracks/" + song_id)
-        print song_data.json()['name'], song_data.json()['artists'][0]['name']
+    # Check that the song was not already voted on by the user
+    voter_vote_list = Vote.query.filter(Vote.voter_id == int(voter_id)).all()
 
-    return jsonify(playlist_dict)
+    for v in voter_vote_list:
+        if v.song_user_id == int(song_user_id):
+            return "You already voted on this track of the playlist!"
+
+    new_vote = Vote.create(song_user_id=int(song_user_id),
+                           voter_id=int(voter_id),
+                           vote_value=int(vote_value))
+
+    return "Okay, you voted on this song!"
 
 
 @app.route("/jukebox/<jukebox_id>/delete", methods=['POST'])
