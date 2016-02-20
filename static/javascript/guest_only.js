@@ -31,10 +31,10 @@ $(function() {
 
     // If data contains song, renders new row in playlist display
     if (song_obj['song_name'] !== undefined) {
-      playlist_row = "<tr>" +
-                     "<td>" + song_obj['song_name'] + "</td>" +
-                     "<td>" + song_obj['song_artist'] + "</td>" +
-                     "<td>" + song_obj['song_album'] + "</td>" +
+      playlist_row = "<tr id=" + "'" + song_obj['song_user_id'] + "'" + ">" +
+                     "<td class='song-name'>" + song_obj['song_name'] + "</td>" +
+                     "<td class='song-artist'>" + song_obj['song_artist'] + "</td>" +
+                     "<td class='song-album'>" + song_obj['song_album'] + "</td>" +
                      "<td>" + "<form class='vote'><input type='hidden' name='vote-value' value='1'>" +
                      "<input type='hidden' name='guest-id' value=" + "'" + song_obj['guest_id'] + "'" + ">" +
                      "<input type='hidden' name='song-user-relation' value=" + "'" + song_obj['song_user_id'] + "'" + ">" +
@@ -57,18 +57,21 @@ $(function() {
         $.get('/guest_id', function (data) {
 
           var vote_route = "/jukebox/" + data['jukebox_id'] + "/vote";
-
           formData += "&voter-id=" + data['guest_id'];
+          console.log(formData);
 
           // Then use the jukebox_id and guest_id to make a post request to vote route
           $.post(vote_route, formData, function (data) {
             
             console.log(data);
-            $('#vote-flash').text(data).fadeIn();
+            $('#vote-flash').text(data['message']).fadeIn();
             
             setTimeout(function() {
               $('#vote-flash').fadeOut();
             }, 2500);
+
+            console.log(JSON.stringify(data));
+            socket.send(JSON.stringify(data));
 
           });
         });

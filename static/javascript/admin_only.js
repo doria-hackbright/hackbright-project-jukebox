@@ -24,16 +24,31 @@ $(function() {
     var song_obj = JSON.parse(evt['data']);
 
     // If data contains song, renders new row to sockets.
-    if (song_obj['song_name'] !== undefined) {
-      playlist_row = "<tr>" +
-                     "<td>" + song_obj['song_name'] + "</td>" +
-                     "<td>" + song_obj['song_artist'] + "</td>" +
-                     "<td>" + song_obj['song_album'] + "</td>" +
-                     "<td>" + song_obj['song_votes'] + "</td>" +
+    if (song_obj['song_name']) {
+      playlist_row = "<tr id=" + "'" + song_obj['song_user_id'] + "'" + ">" +
+                     "<td class='song-name'>" + song_obj['song_name'] + "</td>" +
+                     "<td class='song-artist'>" + song_obj['song_artist'] + "</td>" +
+                     "<td class='song-album'>" + song_obj['song_album'] + "</td>" +
+                     "<td class='song-votes'>" + song_obj['song_votes'] + "</td>" +
                      "</tr>";
 
       $('#playlist-display').append(playlist_row);
     }
+
+    console.log(song_obj);
+    console.log(song_obj['song_user_id']);
+
+    // Handling vote updates
+    if (song_obj['vote_value']) {
+      var selector = "#" + String(song_obj['song_user_id']) + " .song-votes";
+      var original_vote_value = $(selector).text(),
+          new_vote_value = song_obj['vote_value'];
+      console.log(original_vote_value);
+      console.log(new_vote_value );
+      $(selector).text(parseInt(original_vote_value, 10) + parseInt(new_vote_value, 10));
+    }
+
+
   };
 
   // Search toggling

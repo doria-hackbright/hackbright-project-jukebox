@@ -4,7 +4,6 @@
 import os
 import threading
 import json
-from collections import OrderedDict
 
 # Flask
 from flask import Flask, render_template, redirect, request, session, url_for, jsonify
@@ -48,8 +47,10 @@ class WebSocket(WebSocketHandler):
         """Runs when a message is recieved from the WebSocket."""
 
         # Adding the connection to the set
-        jukebox_id = json.loads(message)['jukebox_id']
+        jukebox_id = json.loads(message).get('jukebox_id')
+        print "###########"
         print jukebox_id
+        print "###########"
 
         if json.loads(message).get('first_load'):
             self.connections.setdefault(jukebox_id, set()).add(self)
@@ -283,20 +284,27 @@ def create_vote(jukebox_id):
 
     # Check that the song was not added by the user
     if voter_id == guest_id:
-        return "Hey, you can't vote for a song you added!"
+        return jsonify({"message": "Hey, you can't vote for a song you added!",
+                        "jukebox_id": jukebox_id})
 
     # Check that the song was not already voted on by the user
     voter_vote_list = Vote.query.filter(Vote.voter_id == int(voter_id)).all()
 
     for v in voter_vote_list:
         if v.song_user_id == int(song_user_id):
-            return "You already voted on this track of the playlist!"
+            return jsonify({"message": "You already voted on this track of the playlist!",
+                            "jukebox_id": jukebox_id})
 
     new_vote = Vote.create(song_user_id=int(song_user_id),
                            voter_id=int(voter_id),
                            vote_value=int(vote_value))
 
-    return "Okay, you voted on this song!"
+    response_dict = {"message": "Okay, you voted for this song!",
+                     "vote_value": vote_value,
+                     "song_user_id": song_user_id,
+                     "jukebox_id": jukebox_id}
+
+    return jsonify(response_dict)
 
 
 @app.route("/jukebox/<jukebox_id>/delete", methods=['POST'])
