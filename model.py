@@ -3,7 +3,7 @@
 # Flask and SQLAlchemy
 from flask_sqlalchemy import SQLAlchemy
 
-# Other Libraries
+# Standard Python Libraries
 import uuid
 
 

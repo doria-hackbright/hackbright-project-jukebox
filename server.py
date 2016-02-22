@@ -76,18 +76,40 @@ class WebSocket(WebSocketHandler):
     # Dictionary of connections based on jukebox
     connections = dict()
 
-    # Helper functions
-    def _add_connection(self, message, jukebox_id):
+    def _add_connection(self, jukebox_id):
         """Add a new connection to the connections dict."""
 
-        if json.loads(message).get('first_load'):
-            self.connections.setdefault(jukebox_id, set()).add(self)
+        self.connections.setdefault(jukebox_id, set()).add(self)
+        return self.connections
 
-        return connections
+    def _load_current_playlist(self, jukebox_id):
+        """Load current playlist for a jukebox based on votes."""
 
-    def _load_current_playlist(self, message, jukebox_id):
-        """When a new user joins a jukebox, the current playlist is loaded."""
+        # Query for all the song/user relationships for the playlist so far
+        relation_list = (SongUserRelationship.query
+                                             .filter_by(jukebox_id=jukebox_id)
+                                             .order_by('timestamp')
+                                             .all())
 
+        # Create a dictionary for all the votes for each song
+        relation_dict = dict()
+
+        for r in relation_list:
+            if r.votes:
+                relation_dict.setdefault(r, sum(v.vote_value for v in r.votes))
+            else:
+                relation_dict.setdefault(r, 0)
+
+        if relation_dict:
+            # Construct song_relationship dictionary
+            for r in sorted(relation_dict.keys(), key=relation_dict.get):
+                playlist_row = {"song_name": r.song.song_name,
+                                "song_artist": r.song.song_artist,
+                                "song_album": r.song.song_album,
+                                "song_user_id": r.song_user_id,
+                                "guest_id": r.user_id,
+                                "song_votes": relation_dict.get(r, 0)}
+                self.write_message(playlist_row)
 
     def open(self):
         """Runs when WebSocket is open."""
@@ -97,40 +119,14 @@ class WebSocket(WebSocketHandler):
     def on_message(self, message):
         """Runs when a message is recieved from the WebSocket."""
 
-        # Adding the connection to the set
         jukebox_id = json.loads(message).get('jukebox_id')
-        print "###########"
+        print "####################################"
         print jukebox_id
-        print "###########"
+        print "####################################"
 
-        # TODO: split into a supporting function
         if json.loads(message).get('first_load'):
-            self.connections.setdefault(jukebox_id, set()).add(self)
-
-            # Query for all the song relations for the playlist so far
-            song_relationship_list = SongUserRelationship.query.filter_by(jukebox_id=jukebox_id).order_by('timestamp').all()
-
-            # Get all the votes for each song and put it in a dictionary
-            song_relationship_dict = dict()
-
-            for r in song_relationship_list:
-                if r.votes:
-                    song_relationship_dict.setdefault(r, sum(vote.vote_value for vote in r.votes))
-                else:
-                    song_relationship_dict.setdefault(r, 0)
-
-            # If there are existing relations, render the playlist for this connection
-            if song_relationship_dict:
-
-                # Construct song_relationship dictionary
-                for r in sorted(song_relationship_dict.keys(), key=song_relationship_dict.get):
-                    playlist_row = {"song_name": r.song.song_name,
-                                    "song_artist": r.song.song_artist,
-                                    "song_album": r.song.song_album,
-                                    "song_user_id": r.song_user_id,
-                                    "guest_id": r.user_id,
-                                    "song_votes": song_relationship_dict[r]}
-                    self.write_message(playlist_row)
+            self._add_connection(jukebox_id)
+            self._load_current_playlist(jukebox_id)
 
         # Write the update to all connections
         for c in self.connections[jukebox_id]:
@@ -139,8 +135,10 @@ class WebSocket(WebSocketHandler):
     def on_close(self):
         """Runs when a socket is closed."""
 
+        print "####################################"
         print "Code:", self.close_code, "Reason:", self.close_reason
         print "Socket disconnected!"
+        print "####################################"
 
 
 ################################################################################
