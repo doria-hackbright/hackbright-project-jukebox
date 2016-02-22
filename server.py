@@ -30,13 +30,64 @@ app = Flask(__name__)
 
 
 ################################################################################
-### (2) WebSocket Setup
+### (2) Supporting Functions
+
+
+def spotify_login(session):
+    """Logs into Spotify to access the features."""
+
+    # Set up an event for "logged_in" and a listener for the connection state
+    _logged_in = threading.Event()
+
+    def _logged_in_listener(session):
+        """A function that sets the logged in thread event to true."""
+
+        if session.connection.state is spotify.ConnectionState.LOGGED_IN:
+            _logged_in.set()
+
+    # Set up Pyspotify event loop
+    loop = spotify.EventLoop(session)
+    loop.start()
+
+    # Register event listener
+    session.on(spotify.SessionEvent.CONNECTION_STATE_UPDATED,
+               _logged_in_listener)
+
+    # Login using environment variables
+    session.login(os.environ['SPOTIFY_UN'], os.environ['SPOTIFY_PW'])
+
+    # Blocks the thread until the event becomes True, which will be triggered
+    # by function connection_state_listener (success handler), attached to the
+    # session event listener
+    _logged_in.wait()
+
+    print "#######################################"
+    print "logged in: ", session.connection.state
+    print "######################################"
+
+
+################################################################################
+### (3) WebSocket Setup
 
 
 class WebSocket(WebSocketHandler):
     """Set up WebSocket Handlers."""
 
+    # Dictionary of connections based on jukebox
     connections = dict()
+
+    # Helper functions
+    def _add_connection(self, message, jukebox_id):
+        """Add a new connection to the connections dict."""
+
+        if json.loads(message).get('first_load'):
+            self.connections.setdefault(jukebox_id, set()).add(self)
+
+        return connections
+
+    def _load_current_playlist(self, message, jukebox_id):
+        """When a new user joins a jukebox, the current playlist is loaded."""
+
 
     def open(self):
         """Runs when WebSocket is open."""
@@ -52,6 +103,7 @@ class WebSocket(WebSocketHandler):
         print jukebox_id
         print "###########"
 
+        # TODO: split into a supporting function
         if json.loads(message).get('first_load'):
             self.connections.setdefault(jukebox_id, set()).add(self)
 
@@ -89,43 +141,6 @@ class WebSocket(WebSocketHandler):
 
         print "Code:", self.close_code, "Reason:", self.close_reason
         print "Socket disconnected!"
-
-
-################################################################################
-### (3) Supporting Functions
-
-
-def spotify_login(session):
-    """Logs into Spotify to access the features."""
-
-    # Set up an event for "logged_in" and a listener for the connection state
-    _logged_in = threading.Event()
-
-    def _logged_in_listener(session):
-        """A function that sets the logged in thread event to true."""
-
-        if session.connection.state is spotify.ConnectionState.LOGGED_IN:
-            _logged_in.set()
-
-    # Set up Pyspotify event loop
-    loop = spotify.EventLoop(session)
-    loop.start()
-
-    # Register event listener
-    session.on(spotify.SessionEvent.CONNECTION_STATE_UPDATED,
-               _logged_in_listener)
-
-    # Login using environment variables
-    session.login(os.environ['SPOTIFY_UN'], os.environ['SPOTIFY_PW'])
-
-    # Blocks the thread until the event becomes True, which will be triggered
-    # by function connection_state_listener (success handler), attached to the
-    # session event listener
-    _logged_in.wait()
-
-    print "#######################################"
-    print "logged in: ", session.connection.state
-    print "######################################"
 
 
 ################################################################################

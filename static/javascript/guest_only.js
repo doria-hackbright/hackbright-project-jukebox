@@ -12,6 +12,11 @@ $(function() {
 
   // WebSocket on-open
   socket.onopen = function () {
+
+    // TODO: Shift guest creation to socket on-open
+
+    // Guest creation
+    
     
     // Render current playlist for the jukebox
     $.get("/jukebox_id", function (data) {

@@ -19,6 +19,7 @@ pycparser==2.14
 Pygments==2.0.2
 pyspotify==2.0.5
 requests==2.9.1
+selenium==2.52.0
 shortuuid==0.4.3
 singledispatch==3.4.0.3
 six==1.10.0
