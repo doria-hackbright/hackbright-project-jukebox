@@ -129,34 +129,6 @@ class Song(db.Model):
         return new_song
 
 
-class Vote(db.Model):
-    """An upvote/downvote from a guest user on a song in a jukebox."""
-
-    __tablename__ = "votes"
-
-    vote_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    song_user_id = db.Column(db.Integer,
-                             db.ForeignKey('song_user_relations.song_user_id'),
-                             nullable=False)
-    voter_id = db.Column(db.Integer,
-                         db.ForeignKey('guest_users.guest_id'),
-                         nullable=False)
-    vote_value = db.Column(db.Integer, nullable=False)
-
-    @classmethod
-    def create(cls, song_user_id, voter_id, vote_value):
-        """Generate a new upvote/downvote."""
-
-        new_vote = cls(song_user_id=song_user_id,
-                       voter_id=voter_id,
-                       vote_value=vote_value)
-
-        db.session.add(new_vote)
-        db.session.commit()
-
-        return new_vote
-
-
 class SongUserRelationship(db.Model):
     """Shows who added a song and when a song was added to a jukebox.
 
@@ -195,6 +167,33 @@ class SongUserRelationship(db.Model):
 
         return new_relationship
 
+
+class Vote(db.Model):
+    """An upvote/downvote from a guest user on a song in a jukebox."""
+
+    __tablename__ = "votes"
+
+    vote_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    song_user_id = db.Column(db.Integer,
+                             db.ForeignKey('song_user_relations.song_user_id'),
+                             nullable=False)
+    voter_id = db.Column(db.Integer,
+                         db.ForeignKey('guest_users.guest_id'),
+                         nullable=False)
+    vote_value = db.Column(db.Integer, nullable=False)
+
+    @classmethod
+    def create(cls, song_user_id, voter_id, vote_value):
+        """Generate a new upvote/downvote."""
+
+        new_vote = cls(song_user_id=song_user_id,
+                       voter_id=voter_id,
+                       vote_value=vote_value)
+
+        db.session.add(new_vote)
+        db.session.commit()
+
+        return new_vote
 
 ################################################################################
 ### (2) Setup Functions

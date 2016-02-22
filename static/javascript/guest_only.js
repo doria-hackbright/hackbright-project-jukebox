@@ -1,22 +1,17 @@
 $(function() {
 
-  // Establish a new guest user on load
-  formData = "jukebox_id=" + window.location.href.slice(-36);
-
-  $.post('/guest', formData, function() {
-    console.log("I made a new user!");
-  });
-
   // WebSocket setup
   var socket = new WebSocket("ws://" + document.domain + ":5000/websocket/");
 
   // WebSocket on-open
   socket.onopen = function () {
 
-    // TODO: Shift guest creation to socket on-open
-
     // Guest creation
-    
+    jukebox_data = "jukebox_id=" + window.location.href.slice(-36);
+
+    $.post('/guest', formData, function() {
+      console.log("I made a new user!");
+    });
     
     // Render current playlist for the jukebox
     $.get("/jukebox_id", function (data) {

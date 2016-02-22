@@ -360,7 +360,7 @@ def shows_goodbye():
 if __name__ == "__main__":
 
     # Output in console and needs to be True to invoke DebugToolbarExtension
-    app.debug = True
+    app.debug = False
 
     # Flask debug toolbar "secret key"
     app.secret_key = "MEOW"
@@ -369,7 +369,7 @@ if __name__ == "__main__":
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
     # Use debug toolbar
-    DebugToolbarExtension(app)
+    # DebugToolbarExtension(app)
 
     # Connect to database and run the app
     connect_to_db(app)
