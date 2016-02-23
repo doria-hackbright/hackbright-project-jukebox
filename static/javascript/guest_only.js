@@ -32,9 +32,10 @@ $(function() {
 
     // Parse data from server for song object
     var song_obj = JSON.parse(evt['data']);
+    console.log(song_obj);
 
     // If data contains song, renders new row in playlist display
-    if (song_obj['song_name'] !== undefined) {
+    if (song_obj['song_name'] !== undefined && song_obj['vote_update'] === undefined) {
       playlist_row = "<tr id=" + "'" + song_obj['song_user_id'] + "'" + ">" +
                      "<td class='song-name'>" + song_obj['song_name'] + "</td>" +
                      "<td class='song-artist'>" + song_obj['song_artist'] + "</td>" +
@@ -84,6 +85,32 @@ $(function() {
         $(this).find('input=[submit]').attr('disabled', 'disabled');
 
       });
+    }
+
+    // Re-rendering playlist on new votes
+    if (song_obj['song_name'] !== undefined && song_obj['vote_update'] !== undefined) {
+      console.log("VOTE RESET");
+      console.log(song_obj);
+      console.log("VOTE RESET");
+      
+      if (song_obj['order'] === 0) {
+        $('#playlist-display').empty();
+      }
+
+      playlist_row = "<tr id=" + "'" + song_obj['song_user_id'] + "'" + ">" +
+               "<td class='song-name'>" + song_obj['song_name'] + "</td>" +
+               "<td class='song-artist'>" + song_obj['song_artist'] + "</td>" +
+               "<td class='song-album'>" + song_obj['song_album'] + "</td>" +
+               "<td>" + "<form class='vote'><input type='hidden' name='vote-value' value='1'>" +
+               "<input type='hidden' name='guest-id' value=" + "'" + song_obj['guest_id'] + "'" + ">" +
+               "<input type='hidden' name='song-user-relation' value=" + "'" + song_obj['song_user_id'] + "'" + ">" +
+               "<input type='submit' value='upvote'></form>" +
+               "<td>" + "<form class='vote'><input type='hidden' name='vote-value' value='-1'>" +
+               "<input type='hidden' name='guest-id' value=" + "'" + song_obj['guest_id'] + "'" + ">" +
+               "<input type='hidden' name='song-user-relation' value=" + "'" + song_obj['song_user_id'] + "'" + ">" +
+               "<input type='submit' value='downvote'></form>";
+
+      $('#playlist-display').append(playlist_row);
     }
   };
 
