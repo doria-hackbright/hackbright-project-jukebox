@@ -10,7 +10,7 @@ $(function() {
     $.get("/jukebox_id", function (data) {
       console.log(data);
       
-      socket.send('{"jukebox_id" : ' + '"' + data + '" ,' +
+      socket.send('{"jukebox_id" : ' + '"' + data['jukebox_id'] + '" ,' +
                   '"first_load" : ' + '"yes"' + '}');
     });
 

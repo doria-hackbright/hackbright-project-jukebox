@@ -203,7 +203,7 @@ def jukebox_private(jukebox_id):
 def jukebox_id():
     """Returns jukebox_id."""
 
-    return session.get('jukebox_id')
+    return jsonify({"jukebox_id": session.get('jukebox_id')})
 
 
 @app.route("/guest_id", methods=['GET'])
@@ -222,6 +222,8 @@ def new_guest():
     print jukebox_id
 
     if not session.get('guest_id'):
+        print session.get('guest_id')
+
         new_user = JukeboxGuest.create(jukebox_id=jukebox_id)
         session['guest_id'] = new_user.guest_id
         session['jukebox_id'] = jukebox_id
@@ -305,7 +307,7 @@ def create_vote(jukebox_id):
 
     for v in voter_vote_list:
         if v.song_user_id == int(song_user_id):
-            return jsonify({"message": "You already voted on this track of the playlist!",
+            return jsonify({"message": "Sorry, you already voted on this song!",
                             "jukebox_id": jukebox_id})
 
     new_vote = Vote.create(song_user_id=int(song_user_id),
@@ -326,10 +328,9 @@ def delete_jukebox(jukebox_id):
 
     current_jukebox = Jukebox.query.get(jukebox_id)
 
-    for vote in current_jukebox.votes:
-        db.session.delete(vote)
-
     for relation in current_jukebox.relations:
+        for vote in relation.votes:
+            db.session.delete(vote)
         db.session.delete(relation)
 
     for guest in current_jukebox.guests:
@@ -360,7 +361,7 @@ def shows_goodbye():
 if __name__ == "__main__":
 
     # Output in console and needs to be True to invoke DebugToolbarExtension
-    app.debug = False
+    app.debug = True
 
     # Flask debug toolbar "secret key"
     app.secret_key = "MEOW"

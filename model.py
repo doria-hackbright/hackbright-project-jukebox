@@ -82,12 +82,14 @@ class Jukebox(db.Model):
     admin = db.relationship('JukeboxAdmin', backref='jukebox')
     guests = db.relationship('JukeboxGuest', backref='jukebox')
     relations = db.relationship('SongUserRelationship', backref='jukebox')
-    songs = db.relationship('Song',
-                            secondary='song_user_relations',
-                            backref='jukeboxes')
-    votes = db.relationship('Vote',
-                            secondary='song_user_relations',
-                            backref='jukeboxes')
+
+    # Cannot use in conjunction with relations table references
+    # songs = db.relationship('Song',
+    #                         secondary='song_user_relations',
+    #                         backref='jukeboxes')
+    # votes = db.relationship('Vote',
+    #                         secondary='song_user_relations',
+    #                         backref='jukeboxes')
 
     @classmethod
     def create(cls):
@@ -151,8 +153,8 @@ class SongUserRelationship(db.Model):
                           server_default=db.func.now(),
                           nullable=False)
 
-    song = db.relationship('Song', backref="relations")
-    votes = db.relationship('Vote', backref="relation")
+    song = db.relationship('Song', backref='relations')
+    votes = db.relationship('Vote', backref='relation')
 
     @classmethod
     def create(cls, song_id, jukebox_id, user_id):
