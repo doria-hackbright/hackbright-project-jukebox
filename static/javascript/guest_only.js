@@ -111,6 +111,41 @@ $(function() {
                "<input type='submit' value='downvote'></form>";
 
       $('#playlist-display').append(playlist_row);
+
+      // Setting up voting event listener
+      $('.vote').submit(function (evt) {
+        evt.preventDefault();
+
+        var formData = $(this).serialize();
+        console.log(formData);
+
+        // Need to first get jukebox_id and guest_id
+        $.get('/guest_id', function (data) {
+
+          var vote_route = "/jukebox/" + data['jukebox_id'] + "/vote";
+          formData += "&voter-id=" + data['guest_id'];
+          console.log(formData);
+
+          // Then use the jukebox_id and guest_id to make a post request to vote route
+          $.post(vote_route, formData, function (data) {
+            
+            console.log(data);
+            $('#vote-flash').text(data['message']).fadeIn();
+            
+            setTimeout(function() {
+              $('#vote-flash').fadeOut();
+            }, 2500);
+
+            console.log(JSON.stringify(data));
+            socket.send(JSON.stringify(data));
+
+          });
+        });
+      
+        // Disable the submit button
+        $(this).find('input=[submit]').attr('disabled', 'disabled');
+
+      });
     }
   };
 
@@ -126,6 +161,10 @@ $(function() {
     $.get("/search", {'search-term': $('#search-term').val()}, function(data) {
 
       $("#search-results").slideDown(250);
+
+      // TODO: Put a null state if the search doesn't return anything
+      console.log(data['tracks']['items']);
+      if (data['tracks']['items'].length > 0) {
       
       var search_results = "";
         
@@ -175,6 +214,7 @@ $(function() {
  
         });
       });
+    } else { $('#search-results').text("There are no results, sorry!"); }
     });
   });
 });

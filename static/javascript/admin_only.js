@@ -65,8 +65,6 @@ $(function() {
     //   $(selector).text(parseInt(original_vote_value, 10) + parseInt(new_vote_value, 10));
     // }
 
-
-
   };
 
   // Search toggling
@@ -81,6 +79,10 @@ $(function() {
     $.get("/search", {'search-term': $('#search-term').val()}, function(data) {
 
       $("#search-results").slideDown(250);
+
+      // TODO: Put a null state if the search doesn't return anything
+      console.log(data['tracks']['items']);
+      if (data['tracks']['items'].length > 0) {
 
       var search_results = "";
 
@@ -131,6 +133,7 @@ $(function() {
  
         });
       });
+    } else { $('#search-results').text("There are no results, sorry!"); }
     });
   });
 });
