@@ -65,6 +65,34 @@ def end_of_track_signal(session):
 # Register event listener for the end of the track
 session.on(spotify.SessionEvent.END_OF_TRACK, end_of_track_signal)
 
+
+# Redefining the audio sink
+class MyPortAudio(spotify.PortAudioSink):
+    """Trying to get audio port to write into a buffer."""
+
+    def __init__(self, session):
+        super(MyPortAudio, self).__init__(session)
+        self._buffer = open("123", "wb")
+
+    def _on_music_delivery(self, session, audio_format, frames, num_frames):
+        super(MyPortAudio, self)._on_music_delivery(session, audio_format, frames, num_frames)
+        self._buffer.write(frames)
+
+        print("################################")
+        print("audio_format: %r, %s" % (audio_format, type(audio_format)))
+        print("frames: %r, %s" % (len(frames), type(frames)))
+        print("num_frames: %r, %s" % (num_frames, type(num_frames)))
+        print("################################")
+
+        return num_frames
+
+    def _close(self):
+        super(MyPortAudio, self)._close()
+        self._buffer.close()
+
+# Replacing Spotify class
+spotify.PortAudioSink = MyPortAudio
+
 # Connect an audio sink
 audio = spotify.PortAudioSink(session)
 

@@ -102,6 +102,39 @@ class WebSocket(WebSocketHandler):
 
         return relation_dict
 
+    def _render_new_playlist(self, current_playlist):
+        """Renders the current state of the playlist, ordered by votes."""
+
+        for r in sorted(current_playlist,
+                        key=current_playlist.get,
+                        reverse=True):
+            playlist_row = {"song_name": r.song.song_name,
+                            "song_artist": r.song.song_artist,
+                            "song_album": r.song.song_album,
+                            "song_user_id": r.song_user_id,
+                            "guest_id": r.user_id,
+                            "song_votes": current_playlist.get(r, 0)}
+            self.write_message(playlist_row)
+
+    def _vote_playlist_update(self, jukebox_id, current_playlist):
+        """Re-renders the current playlist based on new votes."""
+
+        i = 0
+        for r in sorted(current_playlist,
+                        key=current_playlist.get,
+                        reverse=True):
+            playlist_row = {"song_name": r.song.song_name,
+                            "song_artist": r.song.song_artist,
+                            "song_album": r.song.song_album,
+                            "song_user_id": r.song_user_id,
+                            "guest_id": r.user_id,
+                            "song_votes": current_playlist.get(r, 0),
+                            "vote_update": True,
+                            "order": i}
+            for c in self.connections[jukebox_id]:
+                c.write_message(playlist_row)
+            i += 1
+
     def open(self):
         """Runs when WebSocket is open."""
 
@@ -122,36 +155,13 @@ class WebSocket(WebSocketHandler):
             current_playlist = self._load_current_playlist(jukebox_id)
 
             if current_playlist:
-                for r in sorted(current_playlist,
-                                key=current_playlist.get,
-                                reverse=True):
-                    playlist_row = {"song_name": r.song.song_name,
-                                    "song_artist": r.song.song_artist,
-                                    "song_album": r.song.song_album,
-                                    "song_user_id": r.song_user_id,
-                                    "guest_id": r.user_id,
-                                    "song_votes": current_playlist.get(r, 0)}
-                    self.write_message(playlist_row)
+                self._render_new_playlist(current_playlist)
 
         if json.loads(message).get('vote_value'):
             current_playlist = self._load_current_playlist(jukebox_id)
 
             if current_playlist:
-                i = 0
-                for r in sorted(current_playlist,
-                                key=current_playlist.get,
-                                reverse=True):
-                    playlist_row = {"song_name": r.song.song_name,
-                                    "song_artist": r.song.song_artist,
-                                    "song_album": r.song.song_album,
-                                    "song_user_id": r.song_user_id,
-                                    "guest_id": r.user_id,
-                                    "song_votes": current_playlist.get(r, 0),
-                                    "vote_update": True,
-                                    "order": i}
-                    for c in self.connections[jukebox_id]:
-                        c.write_message(playlist_row)
-                    i += 1
+                self._vote_playlist_update(jukebox_id, current_playlist)
 
         # Write the update to all connections
         for c in self.connections[jukebox_id]:
