@@ -3,7 +3,7 @@ tmp/
 notes/
 .DS_Store
 *.pyc
-playtest.py
+playground
 .coverage
 123
 secrets.sh
