@@ -105,6 +105,9 @@ class WebSocket(WebSocketHandler):
     def _render_new_playlist(self, current_playlist):
         """Renders the current state of the playlist, ordered by votes."""
 
+        # Need to add secondary sort condition using lambda by r.song_user_id?
+        # How will that interact with reverse?
+        # Can just set one variable to negative in the lambda... huh...
         for r in sorted(current_playlist,
                         key=current_playlist.get,
                         reverse=True):
@@ -392,6 +395,11 @@ def shows_goodbye():
 ################################################################################
 ### (5) Running the app
 
+container = WSGIContainer(app)
+tornado_app = Application([
+    (r'/websocket/', WebSocket),
+    (r'.*', FallbackHandler, dict(fallback=container))
+])
 
 if __name__ == "__main__":
 
@@ -411,10 +419,5 @@ if __name__ == "__main__":
     connect_to_db(app)
     # app.run()
 
-    container = WSGIContainer(app)
-    server = Application([
-        (r'/websocket/', WebSocket),
-        (r'.*', FallbackHandler, dict(fallback=container))
-    ])
-    server.listen(5000)
+    tornado_app.listen(5000)
     IOLoop.instance().start()
