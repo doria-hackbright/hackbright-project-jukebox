@@ -5,6 +5,7 @@ blinker==1.4
 bpython==0.14.2
 certifi==2015.11.20.1
 cffi==1.5.0
+coverage==4.0.3
 curtsies==0.1.23
 Flask==0.10.1
 Flask-DebugToolbar==0.10.0
