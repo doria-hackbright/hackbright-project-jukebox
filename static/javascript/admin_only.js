@@ -1,70 +1,59 @@
 $(function() {
 
   // WebSocket setup
-  var socket = new WebSocket("ws://" + document.domain + ":5000/websocket/");
+  var playlistSocket = new WebSocket("ws://" + document.domain + ":5000/playlist_socket/");
 
   // WebSocket on-open
-  socket.onopen = function () {
+  playlistSocket.onopen = function () {
     
     // Get current jukebox playlist
     $.get("/jukebox_id", function (data) {
       console.log(data);
       
-      socket.send('{"jukebox_id" : ' + '"' + data['jukebox_id'] + '" ,' +
-                  '"first_load" : ' + '"yes"' + '}');
+      playlistSocket.send('{"jukebox_id" : ' + '"' + data['jukebox_id'] + '" ,' +
+                          '"first_load" : ' + '"yes"' + '}');
     });
 
       console.log("Socket Opened");
   };
 
   // WebSocket on-message
-  socket.onmessage = function(evt) {
+  playlistSocket.onmessage = function(evt) {
 
     // Parse data from server for song object
-    var song_obj = JSON.parse(evt['data']);
+    var songObj = JSON.parse(evt['data']);
 
     // If data contains song, renders new row to sockets.
-    if (song_obj['song_name'] !== undefined && song_obj['vote_update'] === undefined) {
-      playlist_row = "<tr id=" + "'" + song_obj['song_user_id'] + "'" + ">" +
-                     "<td class='song-name'>" + song_obj['song_name'] + "</td>" +
-                     "<td class='song-artist'>" + song_obj['song_artist'] + "</td>" +
-                     "<td class='song-album'>" + song_obj['song_album'] + "</td>" +
-                     "<td class='song-votes'>" + song_obj['song_votes'] + "</td>" +
+    if (songObj['song_name'] !== undefined && songObj['vote_update'] === undefined) {
+      playlistRow = "<tr id=" + "'" + songObj['song_user_id'] + "'" + ">" +
+                     "<td class='song-name'>" + songObj['song_name'] + "</td>" +
+                     "<td class='song-artist'>" + songObj['song_artist'] + "</td>" +
+                     "<td class='song-album'>" + songObj['song_album'] + "</td>" +
+                     "<td class='song-votes'>" + songObj['song_votes'] + "</td>" +
                      "</tr>";
 
-      $('#playlist-display').append(playlist_row);
+      $('#playlist-display').append(playlistRow);
     }
 
     // Re-render playlist based on vote
-    if (song_obj['song_name'] !== undefined && song_obj['vote_update'] !== undefined) {
+    if (songObj['song_name'] !== undefined && songObj['vote_update'] !== undefined) {
       console.log("VOTE RESET");
-      console.log(song_obj);
+      console.log(songObj);
       console.log("VOTE RESET");
       
-      if (song_obj['order'] === 0) {
+      if (songObj['order'] === 0) {
         $('#playlist-display').empty();
       }
 
-      playlist_row = "<tr id=" + "'" + song_obj['song_user_id'] + "'" + ">" +
-                     "<td class='song-name'>" + song_obj['song_name'] + "</td>" +
-                     "<td class='song-artist'>" + song_obj['song_artist'] + "</td>" +
-                     "<td class='song-album'>" + song_obj['song_album'] + "</td>" +
-                     "<td class='song-votes'>" + song_obj['song_votes'] + "</td>" +
+      playlistRow = "<tr id=" + "'" + songObj['song_user_id'] + "'" + ">" +
+                     "<td class='song-name'>" + songObj['song_name'] + "</td>" +
+                     "<td class='song-artist'>" + songObj['song_artist'] + "</td>" +
+                     "<td class='song-album'>" + songObj['song_album'] + "</td>" +
+                     "<td class='song-votes'>" + songObj['song_votes'] + "</td>" +
                      "</tr>";
 
-      $('#playlist-display').append(playlist_row);
+      $('#playlist-display').append(playlistRow);
     }
-
-    // Handling vote updates
-    // if (song_obj['vote_value']) {
-    //   var selector = "#" + String(song_obj['song_user_id']) + " .song-votes";
-    //   var original_vote_value = $(selector).text(),
-    //       new_vote_value = song_obj['vote_value'];
-    //   console.log(original_vote_value);
-    //   console.log(new_vote_value );
-    //   $(selector).text(parseInt(original_vote_value, 10) + parseInt(new_vote_value, 10));
-    // }
-
   };
 
   // Search toggling
@@ -84,21 +73,21 @@ $(function() {
       console.log(data['tracks']['items']);
       if (data['tracks']['items'].length > 0) {
 
-      var search_results = "";
+      var searchResults = "";
 
       for (var i = 0; i < data['tracks']['items'].length; i++) {
           
-        var song_name = data['tracks']['items'][i]['name'],
+        var songName = data['tracks']['items'][i]['name'],
             artist = data['tracks']['items'][i]['artists'][0]['name'],
             album = data['tracks']['items'][i]['album']['name'],
             uri = data['tracks']['items'][i]['uri'];
 
 
-        search_results += "<div><strong>Song Name:</strong> " + song_name +
+        searchResults += "<div><strong>Song Name:</strong> " + songName +
                           ", <strong>Artist:</strong> " + artist +
                           "<form action='/song/add' method='post' class='add-song'>" +
                           "<input type='hidden' name='song-name' value=" +
-                          "'" + song_name + "'>" +
+                          "'" + songName + "'>" +
                           "<input type='hidden' name='song-artist' value=" +
                           "'" + artist + "'>" +
                           "<input type='hidden' name='song-album' value=" +
@@ -108,7 +97,7 @@ $(function() {
                           "<input type='submit' value='Add to playlist'></form></div>";
       }
 
-      $("#search-results").html(search_results);
+      $("#search-results").html(searchResults);
 
       // Adding new songs - event listener
       $('.add-song').submit(function (evt) {
@@ -127,9 +116,7 @@ $(function() {
               $('#search-flash').fadeOut();
             }, 2500);
 
-          var playlist_route = window.location.href.slice(0,-6) + "/playlist";
-
-          socket.send(JSON.stringify(data));
+          playlistSocket.send(JSON.stringify(data));
  
         });
       });

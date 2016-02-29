@@ -29,6 +29,12 @@ print "Connected to DB"
 class WebSocketsTest(AsyncHTTPTestCase):
     """Testing WebSocket functionality from server."""
 
+    _ws_client = None
+
+    def setUp(self):
+
+        self._ws_client = yield ...
+
     def get_app(self):
         """Brings in app from server."""
 

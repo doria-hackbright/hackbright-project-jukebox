@@ -3,24 +3,24 @@ $(function() {
   // Guest creation
   // NOTE: Guest creation must occur before the WebSocket setup because
   // AJAX requests async and get request will resolve async from post
-  jukebox_data = "jukebox_id=" + window.location.href.slice(-36);
+  jukeboxData = "jukebox_id=" + window.location.href.slice(-36);
 
-  $.post('/guest', jukebox_data, function() {
+  $.post('/guest', jukeboxData, function() {
     console.log("I made a new user!");
   });
 
-  // WebSocket setup
-  var socket = new WebSocket("ws://" + document.domain + ":5000/websocket/");
+  // Playlist socket setup
+  var playlistSocket = new WebSocket("ws://" + document.domain + ":5000/playlist_socket/");
 
   // WebSocket on-open
-  socket.onopen = function () {
+  playlistSocket.onopen = function () {
     
     // Render current playlist for the jukebox
     $.get("/jukebox_id", function (data) {
       console.log(data);
 
-      socket.send('{"jukebox_id" : ' + '"' + data['jukebox_id'] + '" ,' +
-                    '"first_load" : ' + '"yes"' + '}');
+      playlistSocket.send('{"jukebox_id" : ' + '"' + data['jukebox_id'] + '" ,' +
+                          '"first_load" : ' + '"yes"' + '}');
       });
   
     console.log("Socket Opened");
@@ -28,28 +28,28 @@ $(function() {
   };
 
   // WebSocket on-message 
-  socket.onmessage = function(evt) {
+  playlistSocket.onmessage = function(evt) {
 
     // Parse data from server for song object
-    var song_obj = JSON.parse(evt['data']);
-    console.log(song_obj);
+    var songObj = JSON.parse(evt['data']);
+    console.log(songObj);
 
     // If data contains song, renders new row in playlist display
-    if (song_obj['song_name'] !== undefined && song_obj['vote_update'] === undefined) {
-      playlist_row = "<tr id=" + "'" + song_obj['song_user_id'] + "'" + ">" +
-                     "<td class='song-name'>" + song_obj['song_name'] + "</td>" +
-                     "<td class='song-artist'>" + song_obj['song_artist'] + "</td>" +
-                     "<td class='song-album'>" + song_obj['song_album'] + "</td>" +
+    if (songObj['song_name'] !== undefined && songObj['vote_update'] === undefined) {
+      playlistRow = "<tr id=" + "'" + songObj['song_user_id'] + "'" + ">" +
+                     "<td class='song-name'>" + songObj['song_name'] + "</td>" +
+                     "<td class='song-artist'>" + songObj['song_artist'] + "</td>" +
+                     "<td class='song-album'>" + songObj['song_album'] + "</td>" +
                      "<td>" + "<form class='vote'><input type='hidden' name='vote-value' value='1'>" +
-                     "<input type='hidden' name='guest-id' value=" + "'" + song_obj['guest_id'] + "'" + ">" +
-                     "<input type='hidden' name='song-user-relation' value=" + "'" + song_obj['song_user_id'] + "'" + ">" +
+                     "<input type='hidden' name='guest-id' value=" + "'" + songObj['guest_id'] + "'" + ">" +
+                     "<input type='hidden' name='song-user-relation' value=" + "'" + songObj['song_user_id'] + "'" + ">" +
                      "<input type='submit' value='upvote'></form>" +
                      "<td>" + "<form class='vote'><input type='hidden' name='vote-value' value='-1'>" +
-                     "<input type='hidden' name='guest-id' value=" + "'" + song_obj['guest_id'] + "'" + ">" +
-                     "<input type='hidden' name='song-user-relation' value=" + "'" + song_obj['song_user_id'] + "'" + ">" +
+                     "<input type='hidden' name='guest-id' value=" + "'" + songObj['guest_id'] + "'" + ">" +
+                     "<input type='hidden' name='song-user-relation' value=" + "'" + songObj['song_user_id'] + "'" + ">" +
                      "<input type='submit' value='downvote'></form>";
 
-      $('#playlist-display').append(playlist_row);
+      $('#playlist-display').append(playlistRow);
 
       // Setting up voting event listener
       $('.vote').submit(function (evt) {
@@ -61,12 +61,12 @@ $(function() {
         // Need to first get jukebox_id and guest_id
         $.get('/guest_id', function (data) {
 
-          var vote_route = "/jukebox/" + data['jukebox_id'] + "/vote";
+          var voteRoute = "/jukebox/" + data['jukebox_id'] + "/vote";
           formData += "&voter-id=" + data['guest_id'];
           console.log(formData);
 
           // Then use the jukebox_id and guest_id to make a post request to vote route
-          $.post(vote_route, formData, function (data) {
+          $.post(voteRoute, formData, function (data) {
             
             console.log(data);
             $('#vote-flash').text(data['message']).fadeIn();
@@ -76,7 +76,7 @@ $(function() {
             }, 2500);
 
             console.log(JSON.stringify(data));
-            socket.send(JSON.stringify(data));
+            playlistSocket.send(JSON.stringify(data));
 
           });
         });
@@ -88,29 +88,29 @@ $(function() {
     }
 
     // Re-rendering playlist on new votes
-    if (song_obj['song_name'] !== undefined && song_obj['vote_update'] !== undefined) {
+    if (songObj['song_name'] !== undefined && songObj['vote_update'] !== undefined) {
       console.log("VOTE RESET");
-      console.log(song_obj);
+      console.log(songObj);
       console.log("VOTE RESET");
       
-      if (song_obj['order'] === 0) {
+      if (songObj['order'] === 0) {
         $('#playlist-display').empty();
       }
 
-      playlist_row = "<tr id=" + "'" + song_obj['song_user_id'] + "'" + ">" +
-               "<td class='song-name'>" + song_obj['song_name'] + "</td>" +
-               "<td class='song-artist'>" + song_obj['song_artist'] + "</td>" +
-               "<td class='song-album'>" + song_obj['song_album'] + "</td>" +
+      playlistRow = "<tr id=" + "'" + songObj['song_user_id'] + "'" + ">" +
+               "<td class='song-name'>" + songObj['song_name'] + "</td>" +
+               "<td class='song-artist'>" + songObj['song_artist'] + "</td>" +
+               "<td class='song-album'>" + songObj['song_album'] + "</td>" +
                "<td>" + "<form class='vote'><input type='hidden' name='vote-value' value='1'>" +
-               "<input type='hidden' name='guest-id' value=" + "'" + song_obj['guest_id'] + "'" + ">" +
-               "<input type='hidden' name='song-user-relation' value=" + "'" + song_obj['song_user_id'] + "'" + ">" +
+               "<input type='hidden' name='guest-id' value=" + "'" + songObj['guest_id'] + "'" + ">" +
+               "<input type='hidden' name='song-user-relation' value=" + "'" + songObj['song_user_id'] + "'" + ">" +
                "<input type='submit' value='upvote'></form>" +
                "<td>" + "<form class='vote'><input type='hidden' name='vote-value' value='-1'>" +
-               "<input type='hidden' name='guest-id' value=" + "'" + song_obj['guest_id'] + "'" + ">" +
-               "<input type='hidden' name='song-user-relation' value=" + "'" + song_obj['song_user_id'] + "'" + ">" +
+               "<input type='hidden' name='guest-id' value=" + "'" + songObj['guest_id'] + "'" + ">" +
+               "<input type='hidden' name='song-user-relation' value=" + "'" + songObj['song_user_id'] + "'" + ">" +
                "<input type='submit' value='downvote'></form>";
 
-      $('#playlist-display').append(playlist_row);
+      $('#playlist-display').append(playlistRow);
 
       // Setting up voting event listener
       $('.vote').submit(function (evt) {
@@ -122,12 +122,12 @@ $(function() {
         // Need to first get jukebox_id and guest_id
         $.get('/guest_id', function (data) {
 
-          var vote_route = "/jukebox/" + data['jukebox_id'] + "/vote";
+          var voteRoute = "/jukebox/" + data['jukebox_id'] + "/vote";
           formData += "&voter-id=" + data['guest_id'];
           console.log(formData);
 
           // Then use the jukebox_id and guest_id to make a post request to vote route
-          $.post(vote_route, formData, function (data) {
+          $.post(voteRoute, formData, function (data) {
             
             console.log(data);
             $('#vote-flash').text(data['message']).fadeIn();
@@ -137,7 +137,7 @@ $(function() {
             }, 2500);
 
             console.log(JSON.stringify(data));
-            socket.send(JSON.stringify(data));
+            playlistSocket.send(JSON.stringify(data));
 
           });
         });
@@ -148,6 +148,8 @@ $(function() {
       });
     }
   };
+
+  // Player socket setup
 
   // Search toggling
   $("#search-toggle").click(function() {
@@ -162,24 +164,23 @@ $(function() {
 
       $("#search-results").slideDown(250);
 
-      // TODO: Put a null state if the search doesn't return anything
       console.log(data['tracks']['items']);
       if (data['tracks']['items'].length > 0) {
       
-      var search_results = "";
+      var searchResults = "";
         
       for (var i = 0; i < data['tracks']['items'].length; i++) {
               
-        var song_name = data['tracks']['items'][i]['name'],
+        var songName = data['tracks']['items'][i]['name'],
             artist = data['tracks']['items'][i]['artists'][0]['name'],
             album = data['tracks']['items'][i]['album']['name'],
             uri = data['tracks']['items'][i]['uri'];
 
-        search_results += "<div><strong>Song Name:</strong> " + song_name +
+        searchResults += "<div><strong>Song Name:</strong> " + songName +
                           ", <strong>Artist:</strong> " + artist +
                           "<form action='/song/add' method='post' class='add-song'>" +
                           "<input type='hidden' name='song-name' value=" +
-                          "'" + song_name + "'>" +
+                          "'" + songName + "'>" +
                           "<input type='hidden' name='song-artist' value=" +
                           "'" + artist + "'>" +
                           "<input type='hidden' name='song-album' value=" +
@@ -189,7 +190,7 @@ $(function() {
                           "<input type='submit' value='Add to playlist'></form></div>";
       }
 
-      $("#search-results").html(search_results);
+      $("#search-results").html(searchResults);
 
       // Adding new songs - event listener
       $('.add-song').submit(function (evt) {
@@ -208,9 +209,7 @@ $(function() {
               $('#search-flash').fadeOut();
             }, 2500);
 
-          var playlist_route = window.location.href.slice(0,-6) + "/playlist";
-
-          socket.send(JSON.stringify(data));
+          playlistSocket.send(JSON.stringify(data));
  
         });
       });
