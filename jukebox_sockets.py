@@ -13,11 +13,15 @@ import spotify
 from model import *
 
 # Controls
-from jukebox_player import *
+from jukebox_elements import *
 
 
 ################################################################################
 ### (1) WebSocket Setup
+
+
+# Global dict to keep track of playlists by jukebox
+PLAYLIST_DICT = dict()
 
 
 class PlaylistSocket(WebSocketHandler):
@@ -32,25 +36,13 @@ class PlaylistSocket(WebSocketHandler):
         self.connections.setdefault(jukebox_id, set()).add(self)
         return self.connections
 
-    def _load_current_playlist(self, jukebox_id):
-        """Returns current playlist for a jukebox based on votes."""
+    def _current_playlist(self, jukebox_id):
+        """Add a new playlist to global playlist dict."""
 
-        # Query for all the song/user relationships for the playlist so far
-        relation_list = (SongUserRelationship.query
-                                             .filter_by(jukebox_id=jukebox_id)
-                                             .order_by('timestamp')
-                                             .all())
+        current_playlist = PLAYLIST_DICT.setdefault(jukebox_id, Playlist())
+        current_playlist.load_playlist(jukebox_id)
 
-        # Create a dictionary for all the votes for each song
-        relation_dict = dict()
-
-        for r in relation_list:
-            if r.votes:
-                relation_dict.setdefault(r, sum(v.vote_value for v in r.votes))
-            else:
-                relation_dict.setdefault(r, 0)
-
-        return relation_dict
+        return current_playlist
 
     def _render_new_playlist(self, current_playlist):
         """Renders the current state of the playlist, ordered by votes."""
@@ -58,30 +50,26 @@ class PlaylistSocket(WebSocketHandler):
         # Need to add secondary sort condition using lambda by r.song_user_id?
         # How will that interact with reverse?
         # Can just set one variable to negative in the lambda... huh...
-        for r in sorted(current_playlist,
-                        key=current_playlist.get,
-                        reverse=True):
-            playlist_row = {"song_name": r.song.song_name,
-                            "song_artist": r.song.song_artist,
-                            "song_album": r.song.song_album,
-                            "song_user_id": r.song_user_id,
-                            "guest_id": r.user_id,
-                            "song_votes": current_playlist.get(r, 0)}
+        for r in current_playlist:
+            playlist_row = {"song_name": r[0].song.song_name,
+                            "song_artist": r[0].song.song_artist,
+                            "song_album": r[0].song.song_album,
+                            "song_user_id": r[0].song_user_id,
+                            "guest_id": r[0].user_id,
+                            "song_votes": r[1][0]}
             self.write_message(playlist_row)
 
     def _vote_playlist_update(self, jukebox_id, current_playlist):
         """Re-renders the current playlist based on new votes."""
 
         i = 0
-        for r in sorted(current_playlist,
-                        key=current_playlist.get,
-                        reverse=True):
-            playlist_row = {"song_name": r.song.song_name,
-                            "song_artist": r.song.song_artist,
-                            "song_album": r.song.song_album,
-                            "song_user_id": r.song_user_id,
-                            "guest_id": r.user_id,
-                            "song_votes": current_playlist.get(r, 0),
+        for r in current_playlist:
+            playlist_row = {"song_name": r[0].song.song_name,
+                            "song_artist": r[0].song.song_artist,
+                            "song_album": r[0].song.song_album,
+                            "song_user_id": r[0].song_user_id,
+                            "guest_id": r[0].user_id,
+                            "song_votes": r[1][0],
                             "vote_update": True,
                             "order": i}
             for c in self.connections[jukebox_id]:
@@ -105,13 +93,13 @@ class PlaylistSocket(WebSocketHandler):
         if json.loads(message).get('first_load'):
             self._add_connection(jukebox_id)
 
-            current_playlist = self._load_current_playlist(jukebox_id)
+            current_playlist = self._current_playlist(jukebox_id)._playlist
 
             if current_playlist:
                 self._render_new_playlist(current_playlist)
 
         if json.loads(message).get('vote_value'):
-            current_playlist = self._load_current_playlist(jukebox_id)
+            current_playlist = self._current_playlist(jukebox_id)._playlist
 
             if current_playlist:
                 self._vote_playlist_update(jukebox_id, current_playlist)
@@ -145,7 +133,21 @@ class PlayerSocket(WebSocketHandler):
         # check the message type:
             # play, pause, skip
 
-        #
+        # play
+            # query the current playlist
+            # get URI of first song
+            # load that song
+            # play that song
+
+        # pause
+            # pause the player
+
+        # skip
+            # unload current song
+            # query the current playlist
+            # get URI of the next song
+            # load that song
+            # play that song
 
     def on_close(self):
         """Runs when a socket is closed."""

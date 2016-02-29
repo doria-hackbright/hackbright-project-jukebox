@@ -17,9 +17,9 @@ import requests
 # Models (and Bottles)
 from model import *
 
-# Controls
+# Sockets and Jukebox Elements
 from jukebox_sockets import *
-from jukebox_player import *
+from jukebox_elements import *
 
 
 ################################################################################

@@ -1,6 +1,7 @@
 """Office Jukebox: Spotify Player"""
 
 # Standard Python Libraries
+from collections import deque
 import threading
 
 # Other External Libraries
@@ -11,13 +12,56 @@ from model import *
 
 
 ################################################################################
-### (2) Spotify Player Setup
+### (1) Spotify Player and Playlist Setup
+
+class Playlist(object):
+    """Set up the playlist class."""
+
+    def __init__(self):
+        """Set a playlist when instantiated."""
+
+        self._playlist = deque()
+
+    def load_playlist(self, jukebox_id):
+        """Loads the current playlist for the jukebox based on votes."""
+
+        # Empty out the deque
+        self._playlist = deque()
+
+        # Query for all the song/user relationships for the playlist so far
+        relation_list = (SongUserRelationship.query
+                                             .filter_by(jukebox_id=jukebox_id)
+                                             .order_by('timestamp')
+                                             .all())
+
+        # Create a dictionary for all the votes for each song
+        # Use a tuple that contains the vote value and the negative version
+        # of the song_user_id, which will ensure that when we get the sorted
+        # version of the dictionary, it will be ordered in descending order
+        # by votes and ascending order by song_user_id
+        relation_dict = dict()
+
+        for r in relation_list:
+            if r.votes:
+                relation_dict.setdefault(r, (sum(v.vote_value for v in r.votes),
+                                             -r.song_user_id))
+            else:
+                relation_dict.setdefault(r, (0, -r.song_user_id))
+
+        # Using the dictionary, construct the playlist deque based on
+        # the tuple (# of votes, id)
+
+        for r in sorted(relation_dict,
+                        key=relation_dict.get,
+                        reverse=True):
+            self._playlist.append((r, relation_dict.get(r, 0)))
+
 
 class SpotifyPlayer(object):
     """A player for Spotify tracks."""
 
     def __init__(self):
-        """Set a Spotify session when a class is initialized."""
+        """Set a Spotify session when instantiated."""
 
         self._session = spotify.Session()
 
