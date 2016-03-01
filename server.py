@@ -247,7 +247,7 @@ def shows_goodbye():
 container = WSGIContainer(app)
 tornado_app = Application([
     (r'/playlist_socket/', PlaylistSocket),
-    # (r'/player_socket/', PlayerSocket),
+    (r'/player_socket/', PlayerSocket),
     (r'.*', FallbackHandler, dict(fallback=container))
 ])
 

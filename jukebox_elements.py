@@ -3,6 +3,7 @@
 # Standard Python Libraries
 from collections import deque
 import threading
+import os
 
 # Other External Libraries
 import spotify
@@ -60,32 +61,37 @@ class Playlist(object):
 class SpotifyPlayer(object):
     """A player for Spotify tracks."""
 
-    def __init__(self):
-        """Set a Spotify session when instantiated."""
-
-        self._session = spotify.Session()
-
     def __repr__(self):
         """Set class representation."""
 
         return "<Class: SpotifyPlayer>"
 
+    def _start_session(self):
+        """Starts a Spotify session attribute."""
+
+        # TODO: should check if a session is already running
+        # or end all other active sessions... hmmm.
+        self._session = spotify.Session()
+
+    def _logged_in_listener(self, session):
+        """Event listener that sets logged in thread event to true.
+
+        The thread signals the event and other threads wait for it."""
+
+        if session.connection.state is spotify.ConnectionState.LOGGED_IN:
+            self._logged_in.set()
+            print("###########################################")
+            print("LOGGED IN: %r" % (session.connection.state))
+            print("###########################################")
+
     def _login(self):
-        """Logs into Spotify to access playing music."""
+        """Logs into Spotify to access playing music.
 
+        A session attribute needs to be initiated first."""
+
+        # TODO: check that a session attribute has been initiated before setting login listeners
         # Set up event for "logged in" and a listener for the connection state
-        _logged_in = threading.Event()
-
-        def _logged_in_listener(self):
-            """Event listener that sets logged in thread event to true.
-
-            The thread signals the event and other threads wait for it."""
-
-            if self._session.connection.state is spotify.ConnectionState.LOGGED_IN:
-                _logged_in.set()
-                print("###########################################")
-                print("LOGGED IN: %r" % (session.connection.state))
-                print("###########################################")
+        self._logged_in = threading.Event()
 
         # Set up Pyspotify event loop
         _loop = spotify.EventLoop(self._session)
@@ -93,35 +99,38 @@ class SpotifyPlayer(object):
 
         # Register event listener
         self._session.on(spotify.SessionEvent.CONNECTION_STATE_UPDATED,
-                         _logged_in_listener)
+                         self._logged_in_listener)
 
         # Login using environment variables
-        session.login(os.environ['SPOTIFY_UN'], os.environ['SPOTIFY_PW'])
+        self._session.login(os.environ['SPOTIFY_UN'], os.environ['SPOTIFY_PW'])
 
         # Blocks the thread until the event becomes True, which will be triggered
         # by _logged_in_listener (success handler), attached to the session
         # event listener
-        _logged_in.wait()
+        self._logged_in.wait()
 
-    def _set_audio(self):
-        """Sets up Port Audio Sink for playing audio."""
-
-        self._audio = spotify.PortAudioSink(self._session)
-
-    def _get_track(self, spotify_uri):
-        """Loads session with Spotify track based on given URI."""
-
-        return self._session.get_track(spotify_uri).load()
-
-    def _load_player(self, track):
-        """Loads session player with track."""
-
-        self._session.player.load(track)
-
-    def _play_track(self):
+    def _play_track(self, spotify_uri):
         """Play a track loaded in session."""
 
+        # set up an event for the end of track
+        end_of_track = threading.Event()
+
+        def end_of_track_signal(session):
+            """Success handler to set the end_of_track event."""
+
+            end_of_track.set()
+            print "THE TRACK IS DONE PLAYING"
+
+        # Register event listener for the end of the track
+        self._session.on(spotify.SessionEvent.END_OF_TRACK, end_of_track_signal)
+
+        spotify.PortAudioSink(self._session)
+        track = self._session.get_track(spotify_uri).load()
+        self._session.player.load(track)
         self._session.player.play()
+
+        # while not end_of_track.wait(0.1):
+        #     pass
 
     def _pause_track(self):
         """Pause the currently loaded track."""

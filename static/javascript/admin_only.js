@@ -56,6 +56,42 @@ $(function() {
     }
   };
 
+  // Player socket setup
+  var playerSocket = new WebSocket("ws://" + document.domain + ":5000/player_socket/");
+
+  playerSocket.onopen = function() {
+    console.log("HURRAH");
+      $.get("/jukebox_id", function (data) {
+      console.log(data);
+      var loginData = '{"jukebox_id" : ' + '"' + data['jukebox_id'] + '" ,' +
+                      '"first_load" : ' + '"yes"' + '}';
+      console.log(loginData);
+      playerSocket.send(loginData);
+    });
+
+  };
+
+  // Setting player buttons
+  $("#play-button").click(function() {
+    $.get("/jukebox_id", function (data) {
+      console.log(data);
+      var playData = '{"jukebox_id" : ' + '"' + data['jukebox_id'] + '" ,' +
+                     '"play" : ' + '"true"' + '}';
+      console.log(playData);
+      playerSocket.send(playData);
+    });
+  });
+
+  $("#pause-button").click(function() {
+    $.get("/jukebox_id", function (data) {
+      console.log(data);
+      var pauseData = '{"jukebox_id" : ' + '"' + data['jukebox_id'] + '" ,' +
+                        '"pause" : ' + '"true"}';
+      console.log(pauseData);
+      playerSocket.send(pauseData);
+    });
+  });
+
   // Search toggling
   $("#search-toggle").click(function() {
     $("#search-form").slideToggle(750);
@@ -69,7 +105,6 @@ $(function() {
 
       $("#search-results").slideDown(250);
 
-      // TODO: Put a null state if the search doesn't return anything
       console.log(data['tracks']['items']);
       if (data['tracks']['items'].length > 0) {
 

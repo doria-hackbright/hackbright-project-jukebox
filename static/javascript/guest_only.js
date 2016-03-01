@@ -13,7 +13,7 @@ $(function() {
   var playlistSocket = new WebSocket("ws://" + document.domain + ":5000/playlist_socket/");
 
   // WebSocket on-open
-  playlistSocket.onopen = function () {
+  playlistSocket.onopen = function() {
     
     // Render current playlist for the jukebox
     $.get("/jukebox_id", function (data) {
@@ -150,6 +150,11 @@ $(function() {
   };
 
   // Player socket setup
+  var playerSocket = new WebSocket("ws://" + document.domain + ":5000/player_socket/");
+
+  playerSocket.onopen = function() {
+    console.log("HURRAH");
+  };
 
   // Search toggling
   $("#search-toggle").click(function() {

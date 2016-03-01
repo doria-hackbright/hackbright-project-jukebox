@@ -94,6 +94,7 @@ class PlaylistSocket(WebSocketHandler):
             self._add_connection(jukebox_id)
 
             current_playlist = self._current_playlist(jukebox_id)._playlist
+            print current_playlist
 
             if current_playlist:
                 self._render_new_playlist(current_playlist)
@@ -113,34 +114,92 @@ class PlaylistSocket(WebSocketHandler):
 
         print "####################################"
         print "Code:", self.close_code, "Reason:", self.close_reason
-        print "Socket disconnected!"
+        print "Playlist socket disconnected!"
         print "####################################"
 
 
 class PlayerSocket(WebSocketHandler):
     """Set up WebSocket handlers for music player."""
 
+    # Dictionary of jukebox sessions
+    sessions = dict()
+
+    # Dictionary of jukebox connections
+    connections = dict()
+
+    def _add_connection(self, jukebox_id):
+        """Add a new connection to the connections dict."""
+
+        self.connections.setdefault(jukebox_id, set()).add(self)
+        return self.connections
+
+    def _add_session(self, jukebox_id):
+        """Add a new session to the session dict."""
+
+        self.sessions.setdefault(jukebox_id, SpotifyPlayer())
+        return self.sessions
+
+    def _current_playlist(self, jukebox_id):
+        """Add a new playlist to global playlist dict."""
+
+        current_playlist = PLAYLIST_DICT.setdefault(jukebox_id, Playlist())
+        current_playlist.load_playlist(jukebox_id)
+
+        return current_playlist
+
     def open(self):
         """Runs when WebSocket is open."""
 
-        self._spotify_player = SpotifyPlayer()
-        print self._spotify_player
-        print "Player connectd!"
+        print "####################################"
+        print "Player socket connectd!"
+        print "####################################"
 
-    def on_message(self):
+    def on_message(self, message):
         """Runs when a message is recieved from the WebSocket."""
+
+        print message
+
+        jukebox_id = json.loads(message).get('jukebox_id')
+
+        print "####################################"
+        print jukebox_id
+        print "####################################"
+
+        # need to add a different spotify session for each jukebox
+        if json.loads(message).get('first_load'):
+            self._add_session(jukebox_id)
+            print self.sessions
+            jukebox_player = self.sessions.get(jukebox_id)
+
+            # start a spotify session and login
+            jukebox_player._start_session()
+            jukebox_player._login()
+
+        jukebox_player = self.sessions.get(jukebox_id)
 
         # check the message type:
             # play, pause, skip
 
         # play
-            # query the current playlist
-            # get URI of first song
-            # load that song
-            # play that song
+        if json.loads(message).get('play'):
+
+            # get the current playlist
+            current_playlist = self._current_playlist(jukebox_id)._playlist
+            print current_playlist
+            print len(current_playlist)
+
+            # if the current playlist has stuff in it
+            if len(current_playlist) > 0:
+
+                # pop off the URI for the first song
+                current_song = current_playlist.popleft()
+                song_uri = current_song[0].song.spotify_uri
+                jukebox_player._play_track(song_uri)
 
         # pause
+        if json.loads(message).get('pause'):
             # pause the player
+            jukebox_player._pause_track()
 
         # skip
             # unload current song
@@ -154,5 +213,5 @@ class PlayerSocket(WebSocketHandler):
 
         print "####################################"
         print "Code:", self.close_code, "Reason:", self.close_reason
-        print "Socket disconnected!"
+        print "Player socket disconnected!"
         print "####################################"
