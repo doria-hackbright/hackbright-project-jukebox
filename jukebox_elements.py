@@ -27,7 +27,7 @@ class Playlist(object):
         """Loads the current playlist for the jukebox based on votes."""
 
         # Empty out the deque
-        self._playlist = deque()
+        # self._playlist = deque()
 
         # Query for all the song/user relationships for the playlist so far
         relation_list = (SongUserRelationship.query
@@ -52,10 +52,11 @@ class Playlist(object):
         # Using the dictionary, construct the playlist deque based on
         # the tuple (# of votes, id)
 
-        for r in sorted(relation_dict,
-                        key=relation_dict.get,
-                        reverse=True):
-            self._playlist.append((r, relation_dict.get(r, 0)))
+        sorted_relationships = sorted(relation_dict,
+                                      key=relation_dict.get,
+                                      reverse=True)
+
+        self._playlist = deque(sorted_relationships)
 
 
 class SpotifyPlayer(object):
@@ -80,6 +81,7 @@ class SpotifyPlayer(object):
 
         if session.connection.state is spotify.ConnectionState.LOGGED_IN:
             self._logged_in.set()
+
             print("###########################################")
             print("LOGGED IN: %r" % (session.connection.state))
             print("###########################################")
@@ -112,21 +114,25 @@ class SpotifyPlayer(object):
     def _play_track(self, spotify_uri):
         """Play a track loaded in session."""
 
-        # set up an event for the end of track
-        end_of_track = threading.Event()
+        # Check if player state is loaded
+        if self._session.player.state == "unloaded":
 
-        def end_of_track_signal(session):
-            """Success handler to set the end_of_track event."""
+            # set up an event for the end of track
+            end_of_track = threading.Event()
 
-            end_of_track.set()
-            print "THE TRACK IS DONE PLAYING"
+            def end_of_track_signal(session):
+                """Success handler to set the end_of_track event."""
 
-        # Register event listener for the end of the track
-        self._session.on(spotify.SessionEvent.END_OF_TRACK, end_of_track_signal)
+                end_of_track.set()
+                print "THE TRACK IS DONE PLAYING"
 
-        spotify.PortAudioSink(self._session)
-        track = self._session.get_track(spotify_uri).load()
-        self._session.player.load(track)
+            # Register event listener for the end of the track
+            self._session.on(spotify.SessionEvent.END_OF_TRACK, end_of_track_signal)
+
+            spotify.PortAudioSink(self._session)
+            track = self._session.get_track(spotify_uri).load()
+            self._session.player.load(track)
+
         self._session.player.play()
 
         # while not end_of_track.wait(0.1):
@@ -135,12 +141,16 @@ class SpotifyPlayer(object):
     def _pause_track(self):
         """Pause the currently loaded track."""
 
-        self._session.player.pause()
+        # Check if the player is currently playing
+        if self._session.player.state == "playing":
+            self._session.player.pause()
 
     def _unload(self):
         """Stops the currently playing track."""
 
-        self._session.player.unload()
+        # Check if the player is currently loaded
+        if self._session.player.state == "loaded":
+            self._session.player.unload()
 
     def _prefetch(self, track):
         """Prefetches a track for playback.

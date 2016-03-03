@@ -169,6 +169,11 @@ class SongUserRelationship(db.Model):
 
         return new_relationship
 
+    def total_vote_value(self):
+        """Calculates the sum of all votes for a relationship."""
+
+        return sum(v.vote_value for v in self.votes)
+
 
 class Vote(db.Model):
     """An upvote/downvote from a guest user on a song in a jukebox."""

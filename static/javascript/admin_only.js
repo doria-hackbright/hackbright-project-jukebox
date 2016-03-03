@@ -18,7 +18,7 @@ $(function() {
   };
 
   // WebSocket on-message
-  playlistSocket.onmessage = function(evt) {
+  playlistSocket.onmessage = function (evt) {
 
     // Parse data from server for song object
     var songObj = JSON.parse(evt['data']);
@@ -36,10 +36,28 @@ $(function() {
     }
 
     // Re-render playlist based on vote
-    if (songObj['song_name'] !== undefined && songObj['vote_update'] !== undefined) {
+    if (songObj['song_name'] !== undefined && songObj['vote_update'] !== undefined && songObj['play'] === undefined) {
       console.log("VOTE RESET");
       console.log(songObj);
       console.log("VOTE RESET");
+      
+      if (songObj['order'] === 0) {
+        $('#playlist-display').empty();
+      }
+
+      playlistRow = "<tr id=" + "'" + songObj['song_user_id'] + "'" + ">" +
+                     "<td class='song-name'>" + songObj['song_name'] + "</td>" +
+                     "<td class='song-artist'>" + songObj['song_artist'] + "</td>" +
+                     "<td class='song-album'>" + songObj['song_album'] + "</td>" +
+                     "<td class='song-votes'>" + songObj['song_votes'] + "</td>" +
+                     "</tr>";
+
+      $('#playlist-display').append(playlistRow);
+    }
+
+    // Re-render playlist based on playing
+    if (songObj['play'] && songObj['song_name']) {
+      console.log(songObj);
       
       if (songObj['order'] === 0) {
         $('#playlist-display').empty();
@@ -71,6 +89,12 @@ $(function() {
 
   };
 
+  playerSocket.onmessage = function (data) {
+    console.log("BELOW IS THE DATA SENT TO PLAYLIST SOCKET BY PLAYER.");
+    console.log(data);
+    playlistSocket.send(data['data']);
+  };
+
   // Setting player buttons
   $("#play-button").click(function() {
     $.get("/jukebox_id", function (data) {
@@ -89,6 +113,17 @@ $(function() {
                         '"pause" : ' + '"true"}';
       console.log(pauseData);
       playerSocket.send(pauseData);
+    });
+  });
+
+  $("#skip-button").click(function() {
+    $.get("/jukebox_id", function (data) {
+      console.log(data);
+      var playData = '{"jukebox_id" : ' + '"' + data['jukebox_id'] + '" ,' +
+                     '"skip" : ' + '"true", ' +
+                     '"play" : ' + '"true"' + '}';
+      console.log(playData);
+      playerSocket.send(playData);
     });
   });
 

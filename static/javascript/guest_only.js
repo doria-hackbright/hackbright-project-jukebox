@@ -88,7 +88,7 @@ $(function() {
     }
 
     // Re-rendering playlist on new votes
-    if (songObj['song_name'] !== undefined && songObj['vote_update'] !== undefined) {
+    if (songObj['song_name'] !== undefined && songObj['vote_update'] !== undefined && songObj['play'] === undefined) {
       console.log("VOTE RESET");
       console.log(songObj);
       console.log("VOTE RESET");
@@ -145,6 +145,61 @@ $(function() {
         // Disable the submit button
         $(this).find('input=[submit]').attr('disabled', 'disabled');
 
+      });
+    }
+
+    // Re-rendering based on playing a song
+    if (songObj['play'] && songObj['song_name']) {
+      console.log(songObj);
+      
+      if (songObj['order'] === 0) {
+        $('#playlist-display').empty();
+      }
+
+      playlistRow = "<tr id=" + "'" + songObj['song_user_id'] + "'" + ">" +
+               "<td class='song-name'>" + songObj['song_name'] + "</td>" +
+               "<td class='song-artist'>" + songObj['song_artist'] + "</td>" +
+               "<td class='song-album'>" + songObj['song_album'] + "</td>" +
+               "<td>" + "<form class='vote'><input type='hidden' name='vote-value' value='1'>" +
+               "<input type='hidden' name='guest-id' value=" + "'" + songObj['guest_id'] + "'" + ">" +
+               "<input type='hidden' name='song-user-relation' value=" + "'" + songObj['song_user_id'] + "'" + ">" +
+               "<input type='submit' value='upvote'></form>" +
+               "<td>" + "<form class='vote'><input type='hidden' name='vote-value' value='-1'>" +
+               "<input type='hidden' name='guest-id' value=" + "'" + songObj['guest_id'] + "'" + ">" +
+               "<input type='hidden' name='song-user-relation' value=" + "'" + songObj['song_user_id'] + "'" + ">" +
+               "<input type='submit' value='downvote'></form>";
+
+      $('#playlist-display').append(playlistRow);
+
+      // Setting up voting event listener
+      $('.vote').submit(function (evt) {
+        evt.preventDefault();
+
+        var formData = $(this).serialize();
+        console.log(formData);
+
+        // Need to first get jukebox_id and guest_id
+        $.get('/guest_id', function (data) {
+
+          var voteRoute = "/jukebox/" + data['jukebox_id'] + "/vote";
+          formData += "&voter-id=" + data['guest_id'];
+          console.log(formData);
+
+          // Then use the jukebox_id and guest_id to make a post request to vote route
+          $.post(voteRoute, formData, function (data) {
+            
+            console.log(data);
+            $('#vote-flash').text(data['message']).fadeIn();
+            
+            setTimeout(function() {
+              $('#vote-flash').fadeOut();
+            }, 2500);
+
+            console.log(JSON.stringify(data));
+            playlistSocket.send(JSON.stringify(data));
+
+          });
+        });
       });
     }
   };
