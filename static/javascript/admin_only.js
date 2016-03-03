@@ -75,6 +75,11 @@ $(function() {
 
       $('#playlist-display').append(playlistRow);
     }
+
+    // Empty playlist render
+    if (songObj['empty_playlist']) {
+      $('#playlist-display').empty();
+    }
   };
 
   // Player socket setup

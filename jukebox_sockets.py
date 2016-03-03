@@ -121,6 +121,8 @@ class PlaylistSocket(WebSocketHandler):
     def on_message(self, message):
         """Runs when a message is recieved from the WebSocket."""
 
+        print message
+
         jukebox_id = json.loads(message).get('jukebox_id')
         print("####################################")
         print(jukebox_id)
@@ -153,6 +155,10 @@ class PlaylistSocket(WebSocketHandler):
             if len(current_playlist) > 0:
                 current_playlist = self._current_playlist(jukebox_id)._playlist
                 self.play_playlist_update(jukebox_id, current_playlist)
+
+        if json.loads(message).get('empty_playlist'):
+            for c in self.connections[jukebox_id]:
+                c.write_message(message)
 
     def on_close(self):
         """Runs when a socket is closed."""
@@ -215,6 +221,7 @@ class PlayerSocket(WebSocketHandler):
             # start a spotify session and login
             jukebox_player._start_session()
             jukebox_player._login()
+            jukebox_player._set_audio_sink()
 
         jukebox_player = JUKEBOX_SESSIONS.get(jukebox_id)
 
@@ -242,11 +249,18 @@ class PlayerSocket(WebSocketHandler):
                 jukebox_player._play_track(song_uri)
 
             # delete the song
-            current_playlist = JUKEBOX_ID_TO_PLAYLIST.get(jukebox_id)
-            current_playlist.delete_song_from_playlist(jukebox_id)
+            playlist_obj = JUKEBOX_ID_TO_PLAYLIST.get(jukebox_id)
+            playlist_obj.delete_song_from_playlist(jukebox_id)
+
+            current_playlist = self._current_playlist(jukebox_id)._playlist
 
             for c in self.connections[jukebox_id]:
                 c.write_message(message)
+
+            if not current_playlist:
+                empty_playlist = '{"empty_playlist" : "true", ' + '"jukebox_id" : ' + '"' + jukebox_id + '"' + '}'
+                for c in self.connections[jukebox_id]:
+                    c.write_message(empty_playlist)
 
         # pause
         if json.loads(message).get('pause'):

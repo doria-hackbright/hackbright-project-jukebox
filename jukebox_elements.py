@@ -59,12 +59,14 @@ class Playlist(object):
         """Deletes a song from the database when it is played."""
 
         self.load_playlist(jukebox_id)
-        current_song = self._playlist[0].song_user_id
-        relation = SongUserRelationship.query.get(current_song)
-        for vote in relation.votes:
-            db.session.delete(vote)
-        db.session.delete(relation)
-        db.session.commit()
+
+        if self._playlist:
+            current_song = self._playlist[0].song_user_id
+            relation = SongUserRelationship.query.get(current_song)
+            for vote in relation.votes:
+                db.session.delete(vote)
+            db.session.delete(relation)
+            db.session.commit()
 
 
 class SpotifyPlayer(object):
@@ -93,6 +95,15 @@ class SpotifyPlayer(object):
             print("###########################################")
             print("LOGGED IN: %r" % (session.connection.state))
             print("###########################################")
+
+    def _set_audio_sink(self):
+        """Sets audio sink for device."""
+
+        spotify.PortAudioSink(self._session)
+
+        print("###########################################")
+        print("Audio sink set")
+        print("###########################################")
 
     def _login(self):
         """Logs into Spotify to access playing music.
@@ -137,7 +148,6 @@ class SpotifyPlayer(object):
             # Register event listener for the end of the track
             self._session.on(spotify.SessionEvent.END_OF_TRACK, end_of_track_signal)
 
-            spotify.PortAudioSink(self._session)
             track = self._session.get_track(spotify_uri).load()
             self._session.player.load(track)
 
