@@ -1,11 +1,10 @@
 venv/
 tmp/
 notes/
+playground/
 .DS_Store
-*.pyc
-playground
 .coverage
-123
+*.pyc
 secrets.sh
 spotify_appkey.key
 sample_data.txt
