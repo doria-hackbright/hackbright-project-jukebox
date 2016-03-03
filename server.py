@@ -53,20 +53,6 @@ def homepage():
         return render_template('homepage.html')
 
 
-@app.route("/jukebox", methods=['POST'])
-def new_jukebox():
-    """Creates new jukebox and admin, adds to db, renders admin view."""
-
-    new_jukebox = Jukebox.create()
-    new_jukebox_id = new_jukebox.jukebox_id
-    session['jukebox_id'] = new_jukebox_id
-
-    new_user = JukeboxAdmin.create(jukebox_id=new_jukebox_id)
-    session['admin_id'] = new_user.admin_id
-
-    return redirect(url_for('jukebox_private', jukebox_id=new_jukebox_id))
-
-
 @app.route("/jukebox/<jukebox_id>", methods=['GET'])
 def jukebox_public(jukebox_id):
     """Renders the guest view for a jukebox."""
@@ -86,19 +72,18 @@ def jukebox_private(jukebox_id):
                            url=url)
 
 
-@app.route("/jukebox_id", methods=['GET'])
-def jukebox_id():
-    """Returns jukebox_id."""
+@app.route("/jukebox", methods=['POST'])
+def new_jukebox():
+    """Creates new jukebox and admin, adds to db, renders admin view."""
 
-    return jsonify({"jukebox_id": session.get('jukebox_id')})
+    new_jukebox = Jukebox.create()
+    new_jukebox_id = new_jukebox.jukebox_id
+    session['jukebox_id'] = new_jukebox_id
 
+    new_user = JukeboxAdmin.create(jukebox_id=new_jukebox_id)
+    session['admin_id'] = new_user.admin_id
 
-@app.route("/guest_id", methods=['GET'])
-def guest_id():
-    """Returns guest_id and jukebox_id they belong to."""
-
-    return jsonify({"jukebox_id": session.get('jukebox_id'),
-                    "guest_id": session.get('guest_id')})
+    return redirect(url_for('jukebox_private', jukebox_id=new_jukebox_id))
 
 
 @app.route("/guest", methods=['POST'])
@@ -116,6 +101,53 @@ def new_guest():
         session['jukebox_id'] = jukebox_id
 
     return redirect(url_for('jukebox_public', jukebox_id=jukebox_id))
+
+
+@app.route("/jukebox/<jukebox_id>/delete", methods=['POST'])
+def delete_jukebox(jukebox_id):
+    """Deletes a jukebox and all of its admin, guests, votes, and songs."""
+
+    current_jukebox = Jukebox.query.get(jukebox_id)
+
+    for relation in current_jukebox.relations:
+        for vote in relation.votes:
+            db.session.delete(vote)
+        db.session.delete(relation)
+
+    for guest in current_jukebox.guests:
+        db.session.delete(guest)
+
+    for admin in current_jukebox.admin:
+        db.session.delete(admin)
+
+    db.session.delete(current_jukebox)
+    db.session.commit()
+
+    session.clear()
+
+    return redirect(url_for('shows_goodbye'))
+
+
+@app.route("/goodbye", methods=['GET'])
+def shows_goodbye():
+    """Says goodbye to the user."""
+
+    return render_template('goodbye.html')
+
+
+@app.route("/jukebox_id", methods=['GET'])
+def jukebox_id():
+    """Returns jukebox_id."""
+
+    return jsonify({"jukebox_id": session.get('jukebox_id')})
+
+
+@app.route("/guest_id", methods=['GET'])
+def guest_id():
+    """Returns guest_id and jukebox_id they belong to."""
+
+    return jsonify({"jukebox_id": session.get('jukebox_id'),
+                    "guest_id": session.get('guest_id')})
 
 
 @app.route("/search", methods=['GET'])
@@ -168,7 +200,8 @@ def add_song_to_jukebox():
                      "song_votes": 0,
                      "song_user_id": relation.song_user_id,
                      "jukebox_id": session['jukebox_id'],
-                     "guest_id": session.get('guest_id')}
+                     "guest_id": session.get('guest_id'),
+                     "new_song": True}
 
     return jsonify(response_dict)
 
@@ -204,41 +237,10 @@ def create_vote(jukebox_id):
     response_dict = {"message": "Okay, you voted for this song!",
                      "vote_value": vote_value,
                      "song_user_id": song_user_id,
-                     "jukebox_id": jukebox_id}
+                     "jukebox_id": jukebox_id,
+                     "vote_update": True}
 
     return jsonify(response_dict)
-
-
-@app.route("/jukebox/<jukebox_id>/delete", methods=['POST'])
-def delete_jukebox(jukebox_id):
-    """Deletes a jukebox and all of its admin, guests, votes, and songs."""
-
-    current_jukebox = Jukebox.query.get(jukebox_id)
-
-    for relation in current_jukebox.relations:
-        for vote in relation.votes:
-            db.session.delete(vote)
-        db.session.delete(relation)
-
-    for guest in current_jukebox.guests:
-        db.session.delete(guest)
-
-    for admin in current_jukebox.admin:
-        db.session.delete(admin)
-
-    db.session.delete(current_jukebox)
-    db.session.commit()
-
-    session.clear()
-
-    return redirect(url_for('shows_goodbye'))
-
-
-@app.route("/goodbye", methods=['GET'])
-def shows_goodbye():
-    """Says goodbye to the user."""
-
-    return render_template('goodbye.html')
 
 
 ################################################################################

@@ -24,7 +24,12 @@ $(function() {
     var songObj = JSON.parse(evt['data']);
 
     // If data contains song, renders new row to sockets.
-    if (songObj['song_name'] !== undefined && songObj['vote_update'] === undefined) {
+    if (songObj['new_song']) {
+
+      if (songObj['order'] === 0) {
+        $('#playlist-display').empty();
+      }
+
       playlistRow = "<tr id=" + "'" + songObj['song_user_id'] + "'" + ">" +
                      "<td class='song-name'>" + songObj['song_name'] + "</td>" +
                      "<td class='song-artist'>" + songObj['song_artist'] + "</td>" +
@@ -36,10 +41,7 @@ $(function() {
     }
 
     // Re-render playlist based on vote
-    if (songObj['song_name'] !== undefined && songObj['vote_update'] !== undefined && songObj['play'] === undefined) {
-      console.log("VOTE RESET");
-      console.log(songObj);
-      console.log("VOTE RESET");
+    if (songObj['vote_update']) {
       
       if (songObj['order'] === 0) {
         $('#playlist-display').empty();
@@ -56,9 +58,10 @@ $(function() {
     }
 
     // Re-render playlist based on playing
-    if (songObj['play'] && songObj['song_name']) {
-      console.log(songObj);
+    if (songObj['play']) {
       
+      console.log(songObj);
+
       if (songObj['order'] === 0) {
         $('#playlist-display').empty();
       }

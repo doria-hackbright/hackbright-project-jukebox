@@ -45,46 +45,23 @@ class PlaylistSocket(WebSocketHandler):
 
         return current_playlist
 
-    def _delete_played_song(self, jukebox_id):
-        """Delete the song that was just played by the playlist."""
-
-        current_playlist = self._current_playlist(jukebox_id)._playlist
-
-        print("#####################################")
-        print(current_playlist)
-        print("First song relationship: %s" % (current_playlist[0]))
-        print("#####################################")
-
-        relation_id = current_playlist[0].song_user_id
-
-        print("#####################################")
-        print("RELATIONSHIP ID: %s" % (relation_id))
-        print("#####################################")
-
-        relation = SongUserRelationship.query.get(relation_id)
-        for vote in relation.votes:
-            db.session.delete(vote)
-        db.session.delete(relation)
-        db.session.commit()
-
-    def _render_new_playlist(self, current_playlist):
+    def render_new_playlist(self, current_playlist):
         """Renders the current state of the playlist, ordered by votes."""
 
         # TODO: WRAP playlist_row INTO A FUNCTION
-
-        # Need to add secondary sort condition using lambda by r.song_user_id?
-        # How will that interact with reverse?
-        # Can just set one variable to negative in the lambda... huh...
+        i = 0
         for r in current_playlist:
             playlist_row = {"song_name": r.song.song_name,
                             "song_artist": r.song.song_artist,
                             "song_album": r.song.song_album,
                             "song_user_id": r.song_user_id,
                             "guest_id": r.user_id,
-                            "song_votes": r.total_vote_value()}
+                            "song_votes": r.total_vote_value(),
+                            "order": i,
+                            "first_load": True}
             self.write_message(playlist_row)
 
-    def _vote_playlist_update(self, jukebox_id, current_playlist):
+    def vote_playlist_update(self, jukebox_id, current_playlist):
         """Re-renders the current playlist based on new votes."""
 
         # TODO: USE ENUMERATE
@@ -102,7 +79,24 @@ class PlaylistSocket(WebSocketHandler):
                 c.write_message(playlist_row)
             i += 1
 
-    def _play_playlist_update(self, jukebox_id, current_playlist):
+    def new_song_playlist_update(self, jukebox_id, current_playlist):
+        """Re-renders the current playlist based on new votes."""
+
+        i = 0
+        for r in current_playlist:
+            playlist_row = {"song_name": r.song.song_name,
+                            "song_artist": r.song.song_artist,
+                            "song_album": r.song.song_album,
+                            "song_user_id": r.song_user_id,
+                            "guest_id": r.user_id,
+                            "song_votes": r.total_vote_value(),
+                            "new_song": True,
+                            "order": i}
+            for c in self.connections[jukebox_id]:
+                c.write_message(playlist_row)
+            i += 1
+
+    def play_playlist_update(self, jukebox_id, current_playlist):
         """Re-renders the current playlist based on new votes."""
 
         i = 0
@@ -137,31 +131,28 @@ class PlaylistSocket(WebSocketHandler):
             self._add_connection(jukebox_id)
 
             current_playlist = self._current_playlist(jukebox_id)._playlist
-            print current_playlist
 
             if current_playlist:
-                self._render_new_playlist(current_playlist)
+                self.render_new_playlist(current_playlist)
 
-        if json.loads(message).get('vote_value'):
+        if json.loads(message).get('vote_update'):
             current_playlist = self._current_playlist(jukebox_id)._playlist
 
             if current_playlist:
-                self._vote_playlist_update(jukebox_id, current_playlist)
+                self.vote_playlist_update(jukebox_id, current_playlist)
+
+        if json.loads(message).get('new_song'):
+            current_playlist = self._current_playlist(jukebox_id)._playlist
+
+            if current_playlist:
+                self.new_song_playlist_update(jukebox_id, current_playlist)
 
         if json.loads(message).get('play'):
             current_playlist = self._current_playlist(jukebox_id)._playlist
 
             if len(current_playlist) > 0:
-                self._delete_played_song(jukebox_id)
                 current_playlist = self._current_playlist(jukebox_id)._playlist
-                print "################################"
-                print current_playlist
-                print "################################"
-                self._play_playlist_update(jukebox_id, current_playlist)
-
-        # Write the update to all connections
-        for c in self.connections[jukebox_id]:
-            c.write_message(message)
+                self.play_playlist_update(jukebox_id, current_playlist)
 
     def on_close(self):
         """Runs when a socket is closed."""
@@ -249,6 +240,10 @@ class PlayerSocket(WebSocketHandler):
                 current_song = current_playlist.popleft()
                 song_uri = current_song.song.spotify_uri
                 jukebox_player._play_track(song_uri)
+
+            # delete the song
+            current_playlist = JUKEBOX_ID_TO_PLAYLIST.get(jukebox_id)
+            current_playlist.delete_song_from_playlist(jukebox_id)
 
             for c in self.connections[jukebox_id]:
                 c.write_message(message)

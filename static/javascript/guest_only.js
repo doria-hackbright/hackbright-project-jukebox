@@ -32,10 +32,9 @@ $(function() {
 
     // Parse data from server for song object
     var songObj = JSON.parse(evt['data']);
-    console.log(songObj);
 
-    // If data contains song, renders new row in playlist display
-    if (songObj['song_name'] !== undefined && songObj['vote_update'] === undefined) {
+    // When something is loaded for the first time
+    if (songObj['first_load']) {
       playlistRow = "<tr id=" + "'" + songObj['song_user_id'] + "'" + ">" +
                      "<td class='song-name'>" + songObj['song_name'] + "</td>" +
                      "<td class='song-artist'>" + songObj['song_artist'] + "</td>" +
@@ -54,9 +53,7 @@ $(function() {
       // Setting up voting event listener
       $('.vote').submit(function (evt) {
         evt.preventDefault();
-
         var formData = $(this).serialize();
-        console.log(formData);
 
         // Need to first get jukebox_id and guest_id
         $.get('/guest_id', function (data) {
@@ -68,30 +65,69 @@ $(function() {
           // Then use the jukebox_id and guest_id to make a post request to vote route
           $.post(voteRoute, formData, function (data) {
             
-            console.log(data);
             $('#vote-flash').text(data['message']).fadeIn();
             
             setTimeout(function() {
               $('#vote-flash').fadeOut();
             }, 2500);
 
-            console.log(JSON.stringify(data));
             playlistSocket.send(JSON.stringify(data));
-
           });
         });
-      
-        // Disable the submit button
-        $(this).find('input=[submit]').attr('disabled', 'disabled');
-
       });
     }
 
-    // Re-rendering playlist on new votes
-    if (songObj['song_name'] !== undefined && songObj['vote_update'] !== undefined && songObj['play'] === undefined) {
-      console.log("VOTE RESET");
-      console.log(songObj);
-      console.log("VOTE RESET");
+    // When a playlist is rerendered because a new song is added
+    if (songObj['new_song']) {
+
+      if (songObj['order'] === 0) {
+        $('#playlist-display').empty();
+      }
+
+      playlistRow = "<tr id=" + "'" + songObj['song_user_id'] + "'" + ">" +
+                     "<td class='song-name'>" + songObj['song_name'] + "</td>" +
+                     "<td class='song-artist'>" + songObj['song_artist'] + "</td>" +
+                     "<td class='song-album'>" + songObj['song_album'] + "</td>" +
+                     "<td>" + "<form class='vote'><input type='hidden' name='vote-value' value='1'>" +
+                     "<input type='hidden' name='guest-id' value=" + "'" + songObj['guest_id'] + "'" + ">" +
+                     "<input type='hidden' name='song-user-relation' value=" + "'" + songObj['song_user_id'] + "'" + ">" +
+                     "<input type='submit' value='upvote'></form>" +
+                     "<td>" + "<form class='vote'><input type='hidden' name='vote-value' value='-1'>" +
+                     "<input type='hidden' name='guest-id' value=" + "'" + songObj['guest_id'] + "'" + ">" +
+                     "<input type='hidden' name='song-user-relation' value=" + "'" + songObj['song_user_id'] + "'" + ">" +
+                     "<input type='submit' value='downvote'></form>";
+
+      $('#playlist-display').append(playlistRow);
+
+      // Setting up voting event listener
+      $('.vote').submit(function (evt) {
+        evt.preventDefault();
+        var formData = $(this).serialize();
+
+        // Need to first get jukebox_id and guest_id
+        $.get('/guest_id', function (data) {
+
+          var voteRoute = "/jukebox/" + data['jukebox_id'] + "/vote";
+          formData += "&voter-id=" + data['guest_id'];
+          console.log(formData);
+
+          // Then use the jukebox_id and guest_id to make a post request to vote route
+          $.post(voteRoute, formData, function (data) {
+            
+            $('#vote-flash').text(data['message']).fadeIn();
+            
+            setTimeout(function() {
+              $('#vote-flash').fadeOut();
+            }, 2500);
+
+            playlistSocket.send(JSON.stringify(data));
+          });
+        });
+      });
+    }
+
+    // When a playlist is rerendered based on vote update
+    if (songObj['vote_update']){
       
       if (songObj['order'] === 0) {
         $('#playlist-display').empty();
@@ -141,15 +177,11 @@ $(function() {
 
           });
         });
-      
-        // Disable the submit button
-        $(this).find('input=[submit]').attr('disabled', 'disabled');
-
       });
     }
 
     // Re-rendering based on playing a song
-    if (songObj['play'] && songObj['song_name']) {
+    if (songObj['play']) {
       console.log(songObj);
       
       if (songObj['order'] === 0) {
@@ -195,7 +227,6 @@ $(function() {
               $('#vote-flash').fadeOut();
             }, 2500);
 
-            console.log(JSON.stringify(data));
             playlistSocket.send(JSON.stringify(data));
 
           });
@@ -224,7 +255,6 @@ $(function() {
 
       $("#search-results").slideDown(250);
 
-      console.log(data['tracks']['items']);
       if (data['tracks']['items'].length > 0) {
       
       var searchResults = "";
@@ -255,14 +285,10 @@ $(function() {
       // Adding new songs - event listener
       $('.add-song').submit(function (evt) {
         evt.preventDefault();
-
         formData = $(this).serialize();
-
-        console.log(formData);
 
         $.post('/song/add', formData, function (data) {
 
-            console.log(data);
             $('#search-flash').text(data['song_name'] + " has been added.").fadeIn();
             
             setTimeout(function() {

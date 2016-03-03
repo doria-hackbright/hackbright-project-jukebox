@@ -26,9 +26,6 @@ class Playlist(object):
     def load_playlist(self, jukebox_id):
         """Loads the current playlist for the jukebox based on votes."""
 
-        # Empty out the deque
-        # self._playlist = deque()
-
         # Query for all the song/user relationships for the playlist so far
         relation_list = (SongUserRelationship.query
                                              .filter_by(jukebox_id=jukebox_id)
@@ -44,7 +41,7 @@ class Playlist(object):
 
         for r in relation_list:
             if r.votes:
-                relation_dict.setdefault(r, (sum(v.vote_value for v in r.votes),
+                relation_dict.setdefault(r, (r.total_vote_value(),
                                              -r.song_user_id))
             else:
                 relation_dict.setdefault(r, (0, -r.song_user_id))
@@ -57,6 +54,17 @@ class Playlist(object):
                                       reverse=True)
 
         self._playlist = deque(sorted_relationships)
+
+    def delete_song_from_playlist(self, jukebox_id):
+        """Deletes a song from the database when it is played."""
+
+        self.load_playlist(jukebox_id)
+        current_song = self._playlist[0].song_user_id
+        relation = SongUserRelationship.query.get(current_song)
+        for vote in relation.votes:
+            db.session.delete(vote)
+        db.session.delete(relation)
+        db.session.commit()
 
 
 class SpotifyPlayer(object):
@@ -149,7 +157,11 @@ class SpotifyPlayer(object):
         """Stops the currently playing track."""
 
         # Check if the player is currently loaded
-        if self._session.player.state == "loaded":
+        if self._session.player.state == "loaded" or self._session.player.state == "paused":
+            self._session.player.unload()
+
+        if self._session.player.state == "playing":
+            self._session.player.pause()
             self._session.player.unload()
 
     def _prefetch(self, track):
