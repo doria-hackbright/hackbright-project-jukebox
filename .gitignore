@@ -5,6 +5,7 @@ playground/
 .DS_Store
 .coverage
 *.pyc
+123.wav
 secrets.sh
 spotify_appkey.key
 sample_data.txt
