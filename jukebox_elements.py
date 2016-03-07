@@ -15,6 +15,27 @@ from model import *
 ################################################################################
 ### (1) Spotify Player and Playlist Setup
 
+class MyPortAudio(spotify.PortAudioSink):
+    """Trying to get audio port to write into a buffer."""
+
+    def __init__(self, session):
+        super(MyPortAudio, self).__init__(session)
+        self._buffer = wave.open("123.wav", "wb")
+        self._buffer.setparams((2, 2, 44100, 0, 'NONE', 'NONE'))
+
+    def _on_music_delivery(self, session, audio_format, frames, num_frames):
+        # super(MyPortAudio, self)._on_music_delivery(session, audio_format, frames, num_frames)
+        assert (
+            audio_format.sample_type == spotify.SampleType.INT16_NATIVE_ENDIAN)
+
+        self._buffer.writeframes(frames)
+        return num_frames
+
+    def _close(self):
+        super(MyPortAudio, self)._close()
+        self._buffer.close()
+
+
 class Playlist(object):
     """Set up the playlist class."""
 
