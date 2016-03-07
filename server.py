@@ -4,7 +4,7 @@
 import os
 
 # Flask
-from flask import Flask, render_template, redirect, request, session, url_for, jsonify
+from flask import Flask, render_template, redirect, request, session, url_for, jsonify, Response
 
 # Tornado
 from tornado.wsgi import WSGIContainer
@@ -204,6 +204,19 @@ def add_song_to_jukebox():
                      "new_song": True}
 
     return jsonify(response_dict)
+
+
+@app.route("/play_song")
+def play_song():
+    def generate_raw_data():
+        """Generate raw wave data."""
+
+        raw_data_file = open('123.wav', 'rb')
+        raw_data_contents = raw_data_file.read()
+        raw_data_file.close()
+        yield raw_data_contents
+
+    return Response(generate_raw_data())
 
 
 @app.route("/jukebox/<jukebox_id>/vote", methods=["POST"])

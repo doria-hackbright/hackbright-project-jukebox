@@ -1,5 +1,12 @@
 $(function() {
 
+  // Set up Audio Context
+  window.AudioContext = window.AudioContext || window.webkitAudioContext;
+  var context = new AudioContext();
+  var songBuffer = null;
+
+  var buffAudio = new BuffAudio(context, songBuffer);
+
   // WebSocket setup
   var playlistSocket = new WebSocket("ws://" + document.domain + ":5000/playlist_socket/");
 
@@ -97,32 +104,80 @@ $(function() {
 
   };
 
+  // Fix up prefixing
+  function loadSound() {
+    var request = new XMLHttpRequest();
+    request.open('GET', "/play_song", true);
+    request.responseType = 'arraybuffer';
+
+    request.onload = function(evt) {
+      console.log("we are now in onload");
+      console.log(request);
+      context.decodeAudioData(request.response, function(buffer) {
+        $('#loading-graphic').toggle();
+        buffAudio.initNewBuffer(buffer);
+        buffAudio.play();
+        // playSound();
+      },
+      function (err) {
+          console.log("ERR", err);
+      });
+    };
+    request.send();
+  }
+
+  // function playSound() {
+  //     source.buffer = songBuffer; // tell the source which sound to play
+  //     source.connect(context.destination); // connect the source to the context's destination (the speakers)
+  //     $('#loading-graphic').toggle();
+  //     startTime = context.currentTime;
+  //     source.start(0, startOffset % source.buffer.duration); // play the source now or at the point of the last pause
+  //                                          // note: on older systems, may have to use deprecated noteOn(time);
+  // }
+
+  function pauseSound() {
+    // source.stop();
+    // startOffset += context.currentTime - startTime;
+  }
+
   playerSocket.onmessage = function (data) {
     console.log("BELOW IS THE DATA SENT TO PLAYLIST SOCKET BY PLAYER.");
     console.log(data);
     playlistSocket.send(data['data']);
+    $('#loading-graphic').toggle();
+    setTimeout(loadSound, 10000);
   };
 
   // Setting player buttons
   $("#play-button").click(function() {
-    $.get("/jukebox_id", function (data) {
-      console.log(data);
-      var playData = '{"jukebox_id" : ' + '"' + data['jukebox_id'] + '" ,' +
-                     '"play" : ' + '"true"' + '}';
-      console.log(playData);
-      playerSocket.send(playData);
-    });
-  });
 
-  $("#pause-button").click(function() {
-    $.get("/jukebox_id", function (data) {
-      console.log(data);
-      var pauseData = '{"jukebox_id" : ' + '"' + data['jukebox_id'] + '" ,' +
-                        '"pause" : ' + '"true"}';
-      console.log(pauseData);
-      playerSocket.send(pauseData);
-    });
+    if (buffAudio._buffer === null) {
+      $.get("/jukebox_id", function (data) {
+        console.log(data);
+        var playData = '{"jukebox_id" : ' + '"' + data['jukebox_id'] + '" ,' +
+                       '"play" : ' + '"true"' + '}';
+        console.log(playData);
+        playerSocket.send(playData);
+      });
+    } else {
+      // var source = context.createBufferSource();
+      // source.buffer = songBuffer;
+      // startTime = context.currentTime;
+      // source.start(0, source.buffer.duration % startOffset); // play the source now or at the point of the last pause
+      buffAudio.play();
+    }
   });
+  
+  $("#pause-button").click(function() {
+    // $.get("/jukebox_id", function (data) {
+    //   console.log(data);
+    //   var pauseData = '{"jukebox_id" : ' + '"' + data['jukebox_id'] + '" ,' +
+    //                     '"pause" : ' + '"true"}';
+    //   console.log(pauseData);
+    //   playerSocket.send(pauseData);
+    // });}
+      buffAudio.pause();
+    });
 
   $("#skip-button").click(function() {
     $.get("/jukebox_id", function (data) {
@@ -131,6 +186,9 @@ $(function() {
                      '"skip" : ' + '"true", ' +
                      '"play" : ' + '"true"' + '}';
       console.log(playData);
+      // buffAudio.stop();
+      buffAudio._buffer = null;
+      $('#loading-graphic').toggle();
       playerSocket.send(playData);
     });
   });

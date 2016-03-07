@@ -249,9 +249,10 @@ class PlayerSocket(WebSocketHandler):
                 jukebox_player._play_track(song_uri)
 
             # delete the song
-            playlist_obj = JUKEBOX_ID_TO_PLAYLIST.get(jukebox_id)
-            playlist_obj.delete_song_from_playlist(jukebox_id)
+            current_playlist = self._current_playlist(jukebox_id)
+            current_playlist.delete_song_from_playlist(jukebox_id)
 
+            # reload current playlist
             current_playlist = self._current_playlist(jukebox_id)._playlist
 
             for c in self.connections[jukebox_id]:

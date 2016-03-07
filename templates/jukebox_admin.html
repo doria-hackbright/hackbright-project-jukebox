@@ -3,6 +3,7 @@
 {% block title %}Office Jukebox{% endblock %}
 
 {% block javascript %}
+    <script type="text/javascript" src="/static/third-party/buffaudio.js"></script>    
     <script type="text/javascript" src="/static/javascript/admin_only.js"></script>
 {% endblock %}
 
@@ -17,6 +18,8 @@
             <button id="play-button"><i class="fa fa-play"></i> Play</button>
             <button id="pause-button"><i class="fa fa-pause"></i> Pause</button>
             <button id="skip-button"><i class="fa fa-forward"></i> Skip</button>
+            <div id="loading-graphic" style="display:none;"><img src="/static/imgs/loading.gif">
+                <br>Retrieving your song from Spotify!</div>
         </div>
         <div class ="four columns offset-by-one">
             <span>Include your friends!</span>

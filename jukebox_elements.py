@@ -2,6 +2,7 @@
 
 # Standard Python Libraries
 from collections import deque
+import wave
 import threading
 import os
 
@@ -14,6 +15,7 @@ from model import *
 
 ################################################################################
 ### (1) Spotify Player and Playlist Setup
+
 
 class MyPortAudio(spotify.PortAudioSink):
     """Trying to get audio port to write into a buffer."""
@@ -30,6 +32,10 @@ class MyPortAudio(spotify.PortAudioSink):
 
         self._buffer.writeframes(frames)
         return num_frames
+
+    def _reset_buffer(self):
+        self._buffer = wave.open("123.wav", "wb")
+        self._buffer.setparams((2, 2, 44100, 0, 'NONE', 'NONE'))
 
     def _close(self):
         super(MyPortAudio, self)._close()
@@ -120,7 +126,9 @@ class SpotifyPlayer(object):
     def _set_audio_sink(self):
         """Sets audio sink for device."""
 
-        spotify.PortAudioSink(self._session)
+        # Patch the Spotify Port Audio Sink with this current Port Audio Sink
+        spotify.PortAudioSink = MyPortAudio
+        self._audio = spotify.PortAudioSink(self._session)
 
         print("###########################################")
         print("Audio sink set")
@@ -153,6 +161,9 @@ class SpotifyPlayer(object):
 
     def _play_track(self, spotify_uri):
         """Play a track loaded in session."""
+
+        # Toggle Audio Sink to clear buffer
+        self._audio._reset_buffer()
 
         # Check if player state is loaded
         if self._session.player.state == "unloaded":
