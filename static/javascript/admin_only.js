@@ -114,7 +114,7 @@ $(function() {
       console.log("we are now in onload");
       console.log(request);
       context.decodeAudioData(request.response, function(buffer) {
-        $('#loading-graphic').toggle();
+        $('#loading-graphic').hide();
         buffAudio.initNewBuffer(buffer);
         buffAudio.play();
         // playSound();
@@ -144,7 +144,7 @@ $(function() {
     console.log("BELOW IS THE DATA SENT TO PLAYLIST SOCKET BY PLAYER.");
     console.log(data);
     playlistSocket.send(data['data']);
-    $('#loading-graphic').toggle();
+    $('#loading-graphic').show();
     setTimeout(loadSound, 10000);
   };
 
@@ -188,9 +188,13 @@ $(function() {
       console.log(playData);
       // buffAudio.stop();
       buffAudio._buffer = null;
-      $('#loading-graphic').toggle();
       playerSocket.send(playData);
     });
+  });
+
+  // Unique URL instant highlight
+  $('.public-url').focus(function () {
+    $(this).select();
   });
 
   // Search toggling

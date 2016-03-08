@@ -6,6 +6,106 @@ h1, h2, h3, h4, h5, h6 {
     font-family: 'Crete Round', serif;
 }
 
+body {
+    background-image: url(/static/imgs/connect.png);
+}
+
+div {
+    background-color: #FFFFFF;
+}
+
+td {
+  padding: 1.5em 0.25em;
+}
+
+button {
+    margin: auto;
+}
+
+@media (min-width: 1200px) {
+    .homepage {
+        padding: 5em;
+        margin: 5em 20em;
+    }
+
+    .admin, .guest {
+        padding: 2.5em;
+        margin: 1em 15em;
+    }
+
+    .heading {
+        padding: 0.5em;
+    }
+}
+
+@media (max-width: 1200px) {
+    .homepage {
+        padding: 5em;
+        margin: 5em 8em;
+    }
+
+    .admin, .guest {
+        padding: 2.5em;
+        margin: 1em 5em;
+    }
+
+    .heading {
+        padding: 0.5em;
+    }
+}
+
+@media (max-width: 750px) {
+    .homepage {
+        padding: 5em;
+        margin: 5em 1em;
+    }
+
+    .admin, .guest {
+        padding: 2.5em;
+        margin: 1.5em;
+    }
+
+    .heading {
+        padding: 0.5em;
+    }
+}
+
+@media (max-width: 550px) {
+    .homepage {
+        padding: 1em;
+        margin: 2.5em;
+    }
+
+    .admin, .guest {
+        padding: 1em;
+        margin: 1em;
+    }
+
+    .heading {
+        padding: 0.25em;
+    }
+}
+
+.player {
+    text-align: center;
+    border: 1px solid #e6e6e6;
+    padding: 1em;
+    border-radius: 1em;
+}
+
+.loader-inner {
+    margin: 0.5em 6em;
+}
+
+.line-scale-pulse-out > div {
+    background: #33C3F0;
+}
+
+.public-url {
+    background-color: #e6e6e6;
+    padding: 0.25em;
+}
+
 .search {
     border-radius:4px;
     padding:0.5em;

@@ -42,11 +42,11 @@ $(function() {
                      "<td>" + "<form class='vote'><input type='hidden' name='vote-value' value='1'>" +
                      "<input type='hidden' name='guest-id' value=" + "'" + songObj['guest_id'] + "'" + ">" +
                      "<input type='hidden' name='song-user-relation' value=" + "'" + songObj['song_user_id'] + "'" + ">" +
-                     "<input type='submit' value='upvote'></form>" +
+                     "<button><input type='submit' value='upvote' style='display:none;'><i class='fa fa-thumbs-o-up'></i></button></form>" +
                      "<td>" + "<form class='vote'><input type='hidden' name='vote-value' value='-1'>" +
                      "<input type='hidden' name='guest-id' value=" + "'" + songObj['guest_id'] + "'" + ">" +
                      "<input type='hidden' name='song-user-relation' value=" + "'" + songObj['song_user_id'] + "'" + ">" +
-                     "<input type='submit' value='downvote'></form>";
+                     "<button><input type='submit' value='downvote' style='display:none;'><i class='fa fa-thumbs-o-down'></i></button></form>";
 
       $('#playlist-display').append(playlistRow);
 

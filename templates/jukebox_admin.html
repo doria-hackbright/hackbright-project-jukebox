@@ -8,28 +8,43 @@
 {% endblock %}
 
 {% block content %}
+    <div class="section admin title">
+        <div class="row heading">
+            <h1><i class="fa fa-music"></i> Welcome to your jukebox!</h1>
+        </div><!--row-->
+    </div>
+    <div class="section admin">
+        <div class="row">
+            <div class ="seven columns">
+                <h5>Music Player</h5>
+                <div class="player">
+                    <button id="play-button"><i class="fa fa-play"></i> Play</button>
+                    <button id="pause-button"><i class="fa fa-pause"></i> Pause</button>
+                    <button id="skip-button"><i class="fa fa-forward"></i> Skip</button><br>
+                <div class="loader" id="loading-graphic" style="display:none;">
+                    <div class="loader-inner line-scale-pulse-out">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div><!--inner loader-->
+                    <p>Retrieving your song from Spotify!</p>
+                </div><!--loader-->
+                </div>
+            </div><!--column-->
+            <div class ="five columns">
+                <span>Include your friends!</span><br>
+                <textarea cols="40" class="public-url">{{ public_url }}</textarea><br>
+                <form action={{ url }} method="post" id="delete-jukebox">
+                    <input type="submit" id="delete-submit" value="Party's over, leave this jukebox :(">
+                </form>
+            </div><!--column-->
+        </div> <!--row-->
+    </div>
+    <div class="section admin">
     <div class="row">
-    <h1>Welcome to your jukebox!</h1>
-    <br>
-    </div><!--row-->
-    <div class="row">
-        <div class ="five columns offset-by-one">
-            <h5>Music Player</h5>
-            <button id="play-button"><i class="fa fa-play"></i> Play</button>
-            <button id="pause-button"><i class="fa fa-pause"></i> Pause</button>
-            <button id="skip-button"><i class="fa fa-forward"></i> Skip</button>
-            <div id="loading-graphic" style="display:none;"><img src="/static/imgs/loading.gif">
-                <br>Retrieving your song from Spotify!</div>
-        </div>
-        <div class ="four columns offset-by-one">
-            <span>Include your friends!</span>
-            <textarea rows="2" cols="40" readonly="true" id="public-url">{{ public_url }}</textarea>
-        </div>
-    </div> <!--row-->
-    <div class="row">
-        <br>
-        <br>
-        <div class ="five columns offset-by-one">
+        <div class ="five columns">
             <div id="search-toggle" class="search toggle-field">
                 <h5><i class="fa fa-search-plus"></i> Click here to add a new song!</h5>
             </div>
@@ -44,33 +59,24 @@
                 <div id="search-flash" class="flash-message" style="display:none;"></div><!--Search Flash-->
             </div>
             <div id="search-results" class="search" style="display:none;"><!--Search results populated here--></div>
-        </div>
-        <div class ="four columns offset-by-one">
-            <form action={{ url }} method="post" id="delete-jukebox">
-                <input type="submit" value="Party's over, delete this jukebox :(" id="delete-submit">
-            </form>
-        </div>
-    </div><!--row-->
-    <div class="row">
-        <br>
-        <br>
-        <div class ="ten columns offset-by-one">
+        </div><!--column-->
+        <div class ="seven columns">
             <h5>Playlist</h5>
-            <table class="u-full-width">
-              <thead>
-                <tr>
-                  <th>Song Name</th>
-                  <th>Artist</th>
-                  <th>Album</th>
-                  <th>Votes</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="playlist-display">
-              </tbody>
-            </table>
-        </div>
-    </div> <!--row-->
-
+                <table class="u-full-width">
+                    <thead>
+                        <tr>
+                          <th>Song Name</th>
+                          <th>Artist</th>
+                          <th>Album</th>
+                          <th>Votes</th>
+                          <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="playlist-display">
+                    </tbody>
+                </table>
+            </div><!--column-->
+        </div><!--row-->
+    </div><!--section-->
 {% endblock %}
 
