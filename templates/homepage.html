@@ -6,16 +6,16 @@
 {% endblock %}
 
 {% block content %}
-    <div class="section homepage">
-        <div class="row" style="text-align:center;">
-            <h1>Welcome to Office Jukebox!</h1>
-            <h5>To get started with a new jukebox, click the button below!</h5>
+    <div class="section home homepage">
+        <div class="row home" style="text-align:center;">
+            <h1>Welcome to<br>Office Jukebox!</h1>
+            <h5>To get started with a new jukebox, click the button!</h5>
             <br>
+            <!-- <i class="fa fa-volume-up" style="font-size:5em;"></i> -->
             <form action="/jukebox" method="post">
                 <input class="button-primary" type="submit" value="Make me a jukebox">
             </form>
-            <br>
-            <i class="fa fa-volume-up" style="font-size:5em;"></i>
+            <i class="fa fa-volume-up" style="font-size:10em;"></i>
         </div> <!--row-->
     </div><!--section-->
 {% endblock %}

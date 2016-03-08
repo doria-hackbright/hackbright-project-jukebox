@@ -151,6 +151,13 @@ $(function() {
   // Setting player buttons
   $("#play-button").click(function() {
 
+    // Show "now playing"
+    var songName = $('.song-name')[0].textContent;
+    var songArtist = $('.song-artist')[0].textContent;
+    var songAlbum = $('.song-album')[0].textContent;
+    var nowPlaying = "<p>Now playing: " + songName + " by " + songArtist + "</p>";
+    $('#now-playing').html(nowPlaying);
+
     if (buffAudio._buffer === null) {
       $.get("/jukebox_id", function (data) {
         console.log(data);
@@ -181,6 +188,14 @@ $(function() {
 
   $("#skip-button").click(function() {
     $.get("/jukebox_id", function (data) {
+
+    var songName = $('.song-name')[0].textContent;
+    var songArtist = $('.song-artist')[0].textContent;
+    var songAlbum = $('.song-album')[0].textContent;
+    var nowPlaying = "<p>Now playing: " + songName + " by " + songArtist + "</p>";
+
+    $('#now-playing').html(nowPlaying);
+
       console.log(data);
       var playData = '{"jukebox_id" : ' + '"' + data['jukebox_id'] + '" ,' +
                      '"skip" : ' + '"true", ' +
