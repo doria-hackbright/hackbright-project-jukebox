@@ -96,5 +96,5 @@ function loadSound() {
 ## <a name="author"></a>Author
 Office Jukebox is made by Doria Keung. If you have any questions regarding Office Jukebox, please do not hesitate to reach out:
 <doria.keung@gmail.com> <br>
-[LinkedIn](https://www.linkedin.com/in/doriakeung) <br>
-[Website](http://doriable.github.io)
+* [LinkedIn](https://www.linkedin.com/in/doriakeung) <br>
+* [Website](http://doriable.github.io)
