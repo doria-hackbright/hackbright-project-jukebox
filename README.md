@@ -1,4 +1,4 @@
-**Office Jukebox**
+## Office Jukebox
 
 ## Introduction
 Office Jukebox is a crowd-sourced music player. It allows any user to create a new jukebox that they have ownership and admin rights over. They are able to play/pause/skip music and search for/add new songs from Spotify to their playlist. The jukebox also provides a unique URL used to invite guests. All users on a jukebox are connected through WebSockets, allowing realtime updates. Guests are given a limited view, with the ability to add songs to the playlist and upvote/downvote other songs. When a song is voted on, an updated version of the playlist will render for all users, ordered based on votes. And when the party's over, the admin can end the jukebox session.
@@ -95,6 +95,6 @@ function loadSound() {
 
 ## <a name="author"></a>Author
 Office Jukebox is made by Doria Keung. If you have any questions regarding Office Jukebox, please do not hesitate to reach out:
-<doria.keung@gmail.com>
-[LinkedIn](https://www.linkedin.com/in/doriakeung)
+<doria.keung@gmail.com> <br>
+[LinkedIn](https://www.linkedin.com/in/doriakeung) <br>
 [Website](http://doriable.github.io)
