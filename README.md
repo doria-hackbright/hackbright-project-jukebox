@@ -8,7 +8,6 @@ Office Jukebox is a crowd-sourced music player. It allows any user to create a n
 * [Jukebox Users](#users)
 * [Adding and Voting on Music](#playlist)
 * [Music Streaming](#music)
-* [Version 2.0](#v2)
 * [Author](#author)
 
 ## <a name="tech_stack"></a>Tech Stack
