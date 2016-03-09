@@ -90,6 +90,11 @@ button {
     background-color: transparent;
 }
 
+.goodbye {
+    background-color: transparent;
+    margin: 3em;
+}
+
 .player {
     text-align: center;
     border: 1px solid #e6e6e6;
